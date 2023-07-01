@@ -4,6 +4,7 @@
 * Special attack miss
 * Auto attack miss
 * Max hit
+
 Well this plugin may be of use to you then. You have the option to toggle notification sounds in the event those things happen!
 
 Currently, max hit trumps all of them and will play the max hit sound. This is intended, but isn't unchangeable in the future.
