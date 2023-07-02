@@ -33,7 +33,11 @@ import java.io.*;
 
 @Slf4j
 @PluginDescriptor(
-	name = "Attack Sound Notifications"
+	name = "Attack Sound Notifications",
+	description = "A plugin that plays sounds based on hitsplats and special attacks",
+	tags = {"special", "sounds", "notifications"},
+	loadWhenOutdated = true,
+	enabledByDefault = false
 )
 public class AttackSoundNotificationsPlugin extends Plugin
 {
@@ -53,20 +57,27 @@ public class AttackSoundNotificationsPlugin extends Plugin
 	// most recent hitsplat and the target it was on
 	private Hitsplat lastSpecHitsplat;
 	private NPC lastSpecTarget;
-	private boolean sound_played = false;
-	private boolean readyToPlay = false;
 	private boolean maxed = false;
 	private HitSoundEnum soundToPlay;
+	private boolean skip = false;
+	private static final String BASE_DIRECTORY = System.getProperty("user.home") + "/.runelite/attacknotifications/";
+	public static final File MAX_HIT_FILE = new File(BASE_DIRECTORY, "max/max.wav");
+	public static final File DEFAULT_MISS_FILE = new File(BASE_DIRECTORY, "default/default_miss.wav");
+	public static final File SPEC_MISS_FILE = new File(BASE_DIRECTORY, "spec/default_miss.wav");
+	public static final File SPEC_HIT_FILE = new File(BASE_DIRECTORY, "spec/default_hit.wav");
+	public static final File SPEC_MAX_FILE = new File(BASE_DIRECTORY, "spec/max.wav");
 
-	private static final String BASE_DIRECTORY = System.getProperty("user.home") + "/.runelite/combatnotifications/";
-	public static final File MAX_HIT_FILE = new File(BASE_DIRECTORY, "max.wav");
-	public static final File DEFAULT_MISS_FILE = new File(BASE_DIRECTORY, "default_miss.wav");
-	public static final File ARCLIGHT_MISS_FILE = new File(BASE_DIRECTORY, "arclight_spec_miss.wav");
-	public static final File ARCLIGHT_HIT_FILE = new File(BASE_DIRECTORY, "arclight_spec_hit.wav");
-	public static final File DWH_MISS_FILE = new File(BASE_DIRECTORY, "dwh_spec_miss.wav");
-	public static final File DWH_HIT_FILE = new File(BASE_DIRECTORY, "dwh_spec_hit.wav");
-	public static final File BGS_MISS_FILE = new File(BASE_DIRECTORY, "bgs_spec_miss.wav");
-	public static final File BGS_HIT_FILE = new File(BASE_DIRECTORY, "bgs_spec_hit.wav");
+	public static final File ARCLIGHT_MISS_FILE = new File(BASE_DIRECTORY, "arclight/miss/default_miss.wav.wav");
+	public static final File ARCLIGHT_HIT_FILE = new File(BASE_DIRECTORY, "arclight/hit/default_hit.wav");
+	public static final File DWH_MISS_FILE = new File(BASE_DIRECTORY, "dwh/miss/default_miss.wav");
+	public static final File DWH_HIT_FILE = new File(BASE_DIRECTORY, "dwh/hit/default_hit.wav");
+	public static final File DWH_MAX_FILE = new File(BASE_DIRECTORY, "dwh/max/default.wav");
+	public static final File BGS_MISS_FILE = new File(BASE_DIRECTORY, "bgs/miss/default_miss.wav");
+	public static final File BGS_HIT_FILE = new File(BASE_DIRECTORY, "bgs/hit/default_hit.wav");
+	public static final File BGS_MAX_FILE = new File(BASE_DIRECTORY, "bgs/max/default.wav");
+	public static final File BONE_DAGGER_MISS_FILE = new File(BASE_DIRECTORY, "bone_dagger/miss/default_miss.wav");
+	public static final File BONE_DAGGER_HIT_FILE = new File(BASE_DIRECTORY, "bone_dagger/hit/default_hit.wav");
+	public static final File BONE_DAGGER_MAX_FILE = new File(BASE_DIRECTORY, "bone_dagger/max/default.wav");
 
 	private long lastClipMTime = CLIP_MTIME_UNLOADED;
 	private static final long CLIP_MTIME_UNLOADED = -2;
@@ -88,37 +99,58 @@ public class AttackSoundNotificationsPlugin extends Plugin
 	@Subscribe
 	public void onGameTick(GameTick event)
 	{
-		if (maxed) {
-			log.debug("Playing maxed sound");
-			playCustomSound(soundToPlay);
-			readyToPlay = false;
-			soundToPlay = null;
-			maxed = false;
-			lastSpecHitsplat = null;
-			specialWeapon = null;
-			lastSpecTarget = null;
-		}
-
 		if (lastSpecHitsplat != null && specialWeapon != null && lastSpecTarget != null)
 		{
 			log.debug("Special attack detected");
-			if (lastSpecHitsplat.getAmount() > 0)
+			if (lastSpecHitsplat.getAmount() > 0 && config.anySpecHitBoolean())
 			{
-				specialAttackHit(specialWeapon, lastSpecHitsplat, lastSpecTarget);
+				if (maxed && config.prioritizeMax())
+				{
+					if (config.globalSpecMaxBoolean() && !skip)
+					{
+						soundToPlay = HitSoundEnum.SPEC_MAX;
+					}
+					if (config.bDaggerMaxBoolean() || config.bgsMaxBoolean() || config.dwhMaxBoolean())
+					{
+						specialAttackHit(specialWeapon, lastSpecHitsplat, lastSpecTarget);
+					}
+					log.debug("Playing maxed spec sound");
+					playCustomSound(soundToPlay);
+					skip = false;
+					soundToPlay = null;
+					maxed = false;
+				}
+				else {
+					specialAttackHit(specialWeapon, lastSpecHitsplat, lastSpecTarget);
+					log.debug("Playing hit spec sound");
+					playCustomSound(soundToPlay);
+					skip = false;
+					soundToPlay = null;
+					maxed = false;
+				}
 			}
-			if (lastSpecHitsplat.getAmount() == 0)
+			else if (lastSpecHitsplat.getAmount() == 0 && config.anySpecMissBoolean())
 			{
-				specialAttackHit(specialWeapon, lastSpecHitsplat, lastSpecTarget);
+				boolean specSound = specialAttackHit(specialWeapon, lastSpecHitsplat, lastSpecTarget);
+				if (specSound) {
+					log.debug("Playing spec equal to 0 sound");
+					playCustomSound(soundToPlay);
+					soundToPlay = null;
+				}
 			}
 
 			specialWeapon = null;
 			lastSpecHitsplat = null;
 			lastSpecTarget = null;
-		}
-
-		if (readyToPlay) {
+		} else if (maxed) {
+			log.debug("Playing maxed sound");
 			playCustomSound(soundToPlay);
-			readyToPlay = false;
+			soundToPlay = null;
+			maxed = false;
+		}
+		else if (soundToPlay != null) {
+			log.debug("Playing sound");
+			playCustomSound(soundToPlay);
 			soundToPlay = null;
 			maxed = false;
 		}
@@ -164,7 +196,6 @@ public class AttackSoundNotificationsPlugin extends Plugin
 
 	@Subscribe
 	public void onHitsplatApplied(HitsplatApplied hitsplatApplied) {
-		sound_played = false;
 		Actor target = hitsplatApplied.getActor();
 		Hitsplat hitsplat = hitsplatApplied.getHitsplat();
 		if (hitsplatTick == client.getTickCount()) {
@@ -185,7 +216,6 @@ public class AttackSoundNotificationsPlugin extends Plugin
 		log.info("BLOCK_ME");
 		if (config.missBoolean()) {
 			log.debug("Queueing missed attack sound fallback");
-			readyToPlay = true;
 			soundToPlay = HitSoundEnum.DEFAULT_MISS;
 		}
 	}
@@ -193,7 +223,6 @@ public class AttackSoundNotificationsPlugin extends Plugin
 	{
 		if (config.maxBoolean()) {
 			log.debug("DAMAGE_MAX_ME");
-			readyToPlay = true;
 			soundToPlay = HitSoundEnum.MAX;
 			maxed = true;
 		}
@@ -226,6 +255,7 @@ public class AttackSoundNotificationsPlugin extends Plugin
 			}
 		}
 		clip.setFramePosition(0);
+		log.debug("Starting clip");
 		clip.start();
 		return true;
 	}
@@ -306,31 +336,97 @@ public class AttackSoundNotificationsPlugin extends Plugin
 		return specialWeapon.isDamage() ? hitsplat.getAmount() : 0;
 	}
 
-	private void specialAttackHit(SpecialWeapon specialWeapon, Hitsplat hitsplat, NPC target)
+	private boolean specialAttackHit(SpecialWeapon specialWeapon, Hitsplat hitsplat, NPC target)
 	{
-		int hit = getHit(specialWeapon, hitsplat);
-
 		log.debug("Special attack hit {} hitsplat {}", specialWeapon, hitsplat.getAmount());
 		int [] dwhItemIds = SpecialWeapon.DRAGON_WARHAMMER.getItemID();
 		int [] bgsItemIds = SpecialWeapon.BANDOS_GODSWORD.getItemID();
 		int [] arclightItemIds = SpecialWeapon.ARCLIGHT.getItemID();
-		if (arclightItemIds[0] == specialWeapon.getItemID()[0]) {
-			if (hitsplat.getAmount() == 0 && config.arclightMissBoolean()) {
-				log.debug("Arclight spec missed");
-				readyToPlay = true;
-				soundToPlay = HitSoundEnum.ARCLIGHT_MISS;
-				return;
+		int [] boneDaggerItemIds = SpecialWeapon.BONE_DAGGER.getItemID();
+		if (config.useCustomSpecSound()) {
+			if (arclightItemIds[0] == specialWeapon.getItemID()[0]) {
+				if (hitsplat.getAmount() == 0 && config.arclightMissBoolean()) {
+					log.debug("Arclight spec missed");
+					soundToPlay = HitSoundEnum.ARCLIGHT_MISS;
+					return true;
+				}
+				if (hitsplat.getAmount() != 0 && config.arclightHitBoolean()) {
+					log.debug("Arclight spec hit");
+					soundToPlay = HitSoundEnum.ARCLIGHT_HIT;
+					return true;
+				}
 			}
-			if (hitsplat.getAmount() != 0 && config.arclightHitBoolean()) {
-				log.debug("Arclight spec hit");
-				readyToPlay = true;
-				soundToPlay = HitSoundEnum.ARCLIGHT_HIT;
-				return;
-			}
-		}
-		if (dwhItemIds[0] == specialWeapon.getItemID()[0]) {
 
+			if (dwhItemIds[0] == specialWeapon.getItemID()[0] || dwhItemIds[1] == specialWeapon.getItemID()[0]) {
+				if (hitsplat.getAmount() != 0 && config.dwhHitBoolean()) {
+					log.debug("DWH spec hit");
+					if(maxed){
+						soundToPlay = HitSoundEnum.DWH_MAX;
+						log.debug("Assigned sound to DWH max");
+						skip = true;
+					} else {
+						soundToPlay = HitSoundEnum.DWH_HIT;
+						log.debug("Assigned sound to DWH hit");
+					}
+					return true;
+				}
+				if (hitsplat.getAmount() == 0 && config.dwhMissBoolean()) {
+					log.debug("DWH spec missed");
+					soundToPlay = HitSoundEnum.DWH_MISS;
+					return true;
+				}
+			}
+
+			if (bgsItemIds[0] == specialWeapon.getItemID()[0]) {
+				if (hitsplat.getAmount() != 0 && config.bgsHitBoolean()) {
+					log.debug("BGS spec hit");
+					if (maxed) {
+						soundToPlay = HitSoundEnum.BGS_MAX;
+						log.debug("Assigned sound to BGS max");
+						skip = true;
+					} else {
+						soundToPlay = HitSoundEnum.BGS_HIT;
+						log.debug("Assigned sound to BGS hit");
+					}
+					return true;
+				}
+				if (hitsplat.getAmount() == 0 && config.bgsMissBoolean()) {
+					log.debug("BGS spec missed");
+					soundToPlay = HitSoundEnum.BGS_MISS;
+					return true;
+				}
+
+			}
+			if (boneDaggerItemIds[0] == specialWeapon.getItemID()[0] || boneDaggerItemIds[1] == specialWeapon.getItemID()[0] || boneDaggerItemIds[2] == specialWeapon.getItemID()[0] || boneDaggerItemIds[3] == specialWeapon.getItemID()[0]) {
+				if (hitsplat.getAmount() != 0 && config.bDaggerHitBoolean()) {
+					log.debug("Bone dagger spec hit");
+					if (maxed) {
+						soundToPlay = HitSoundEnum.BONE_DAGGER_MAX;
+						skip = true;
+					} else {
+						soundToPlay = HitSoundEnum.BONE_DAGGER_HIT;
+					}
+					return true;
+				}
+				if (hitsplat.getAmount() == 0 && config.bDaggerMissBoolean()) {
+					log.debug("Bone dagger spec missed");
+					soundToPlay = HitSoundEnum.BONE_DAGGER_MISS;
+					return true;
+				}
+			}
 		}
+		else
+		{
+			if (hitsplat.getAmount() != 0) {
+				soundToPlay = HitSoundEnum.SPEC_HIT;
+				return true;
+			}
+			if (hitsplat.getAmount() == 0) {
+				soundToPlay = HitSoundEnum.SPEC_MISS;
+				return true;
+			}
+		}
+		return false;
 	}
 	@Provides
 	AttackSoundNotificationsConfig provideConfig(ConfigManager configManager)
