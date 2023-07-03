@@ -13,10 +13,9 @@ Well this plugin may be of use to you then. You have the option to toggle notifi
 ### CURRENT:
 Default audio is packed into the repo. You can change the audio by 
 
-1. Navigate to your .runelite folder
-    1. You can right-click the screenshot button in the top right of the runelite client
-    2. Then open screenshot folder, and navigate to the .runelite directory
-    3. Then open screenshot folder, and navigate to the .runelite directory
+1. Navigate to your .runelite folder (%userprofile%\.runelite\)
+    a. You can right-click the screenshot button in the top right of the runelite client
+    b. Then click open screenshot folder, and navigate to the .runelite directory
 2. Create a folder called 'attacknotifications'
 3. Add your sound .wav file in the folder
 

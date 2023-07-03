@@ -94,6 +94,7 @@ public class AttackSoundNotificationsPlugin extends Plugin {
 	public static final File DEFAULT_BONE_DAGGER_HIT_FILE = new File(AttackSoundNotificationsPlugin.class.getResource("/default_bone_dagger_spec_hit.wav").getFile());
 	public static final File DEFAULT_BONE_DAGGER_MAX_FILE = new File(AttackSoundNotificationsPlugin.class.getResource("/default_bone_dagger_spec_max.wav").getFile());
 	///////////////////
+	
 	private long lastClipMTime = CLIP_MTIME_UNLOADED;
 	private static final long CLIP_MTIME_UNLOADED = -2;
 	private static final long CLIP_MTIME_BUILTIN = -1;
