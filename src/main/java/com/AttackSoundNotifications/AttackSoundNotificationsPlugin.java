@@ -53,7 +53,7 @@ public class AttackSoundNotificationsPlugin extends Plugin {
 	private Hitsplat lastSpecHitsplat;
 	private NPC lastSpecTarget;
 	private boolean maxed = false;
-	private File soundToPlay;
+	private InputStream soundToPlay;
 	private boolean skip = false;
 	private static final String BASE_DIRECTORY = System.getProperty("user.home") + "/.runelite/attacknotifications/";
 
@@ -77,27 +77,23 @@ public class AttackSoundNotificationsPlugin extends Plugin {
 	//////////////////
 
 	// Default Files //
-	public static final File DEFAULT_MAX_HIT_FILE = new File (AttackSoundNotificationsPlugin.class.getResource("/default_max.wav").getFile());
-	public static final File DEFAULT_MISS_FILE = new File(AttackSoundNotificationsPlugin.class.getResource("/default_miss.wav").getFile());
-	public static final File DEFAULT_SPEC_MISS_FILE = new File(AttackSoundNotificationsPlugin.class.getResource("/default_spec_miss.wav").getFile());
-	public static final File DEFAULT_SPEC_HIT_FILE = new File(AttackSoundNotificationsPlugin.class.getResource("/default_spec_hit.wav").getFile());
-	public static final File DEFAULT_SPEC_MAX_FILE = new File(AttackSoundNotificationsPlugin.class.getResource("/default_spec_max.wav").getFile());
-	public static final File DEFAULT_ARCLIGHT_MISS_FILE = new File(AttackSoundNotificationsPlugin.class.getResource("/default_arclight_spec_miss.wav").getFile());
-	public static final File DEFAULT_ARCLIGHT_HIT_FILE = new File(AttackSoundNotificationsPlugin.class.getResource("/default_arclight_spec_hit.wav").getFile());
-	public static final File DEFAULT_DWH_MISS_FILE = new File(AttackSoundNotificationsPlugin.class.getResource("/default_dwh_spec_miss.wav").getFile());
-	public static final File DEFAULT_DWH_HIT_FILE = new File(AttackSoundNotificationsPlugin.class.getResource("/default_dwh_spec_hit.wav").getFile());
-	public static final File DEFAULT_DWH_MAX_FILE = new File(AttackSoundNotificationsPlugin.class.getResource("/default_dwh_spec_max.wav").getFile());
-	public static final File DEFAULT_BGS_MISS_FILE = new File(AttackSoundNotificationsPlugin.class.getResource("/default_bgs_spec_miss.wav").getFile());
-	public static final File DEFAULT_BGS_HIT_FILE = new File(AttackSoundNotificationsPlugin.class.getResource("/default_bgs_spec_hit.wav").getFile());
-	public static final File DEFAULT_BGS_MAX_FILE = new File(AttackSoundNotificationsPlugin.class.getResource("/default_bgs_spec_max.wav").getFile());
-	public static final File DEFAULT_BONE_DAGGER_MISS_FILE = new File(AttackSoundNotificationsPlugin.class.getResource("/default_bone_dagger_spec_miss.wav").getFile());
-	public static final File DEFAULT_BONE_DAGGER_HIT_FILE = new File(AttackSoundNotificationsPlugin.class.getResource("/default_bone_dagger_spec_hit.wav").getFile());
-	public static final File DEFAULT_BONE_DAGGER_MAX_FILE = new File(AttackSoundNotificationsPlugin.class.getResource("/default_bone_dagger_spec_max.wav").getFile());
+	public static final String DEFAULT_MAX_HIT_FILE = "/default_max.wav";
+	public static final String DEFAULT_MISS_FILE = "/default_miss.wav";
+	public static final String DEFAULT_SPEC_MISS_FILE = "/default_spec_miss.wav";
+	public static final String DEFAULT_SPEC_HIT_FILE = "/default_spec_hit.wav";
+	public static final String DEFAULT_SPEC_MAX_FILE = "/default_spec_max.wav";
+	public static final String DEFAULT_ARCLIGHT_MISS_FILE = "/default_arclight_spec_miss.wav";
+	public static final String DEFAULT_ARCLIGHT_HIT_FILE = "/default_arclight_spec_hit.wav";
+	public static final String DEFAULT_DWH_MISS_FILE = "/default_dwh_spec_miss.wav";
+	public static final String DEFAULT_DWH_HIT_FILE = "/default_dwh_spec_hit.wav";
+	public static final String DEFAULT_DWH_MAX_FILE = "/default_dwh_spec_max.wav";
+	public static final String DEFAULT_BGS_MISS_FILE = "/default_bgs_spec_miss.wav";
+	public static final String DEFAULT_BGS_HIT_FILE = "/default_bgs_spec_hit.wav";
+	public static final String DEFAULT_BGS_MAX_FILE = "/default_bgs_spec_max.wav";
+	public static final String DEFAULT_BONE_DAGGER_MISS_FILE = "/default_bone_dagger_spec_miss.wav";
+	public static final String DEFAULT_BONE_DAGGER_HIT_FILE = "/default_bone_dagger_spec_hit.wav";
+	public static final String DEFAULT_BONE_DAGGER_MAX_FILE = "/default_bone_dagger_spec_max.wav";
 	///////////////////
-	
-	private long lastClipMTime = CLIP_MTIME_UNLOADED;
-	private static final long CLIP_MTIME_UNLOADED = -2;
-	private static final long CLIP_MTIME_BUILTIN = -1;
 
 	@Override
 	protected void startUp() throws Exception {
@@ -116,46 +112,38 @@ public class AttackSoundNotificationsPlugin extends Plugin {
 			if (lastSpecHitsplat.getAmount() > 0 && config.anySpecHitBoolean()) {
 				if (maxed && config.prioritizeMax()) {
 					if (config.globalSpecMaxBoolean() && !skip) {
-						soundToPlay = HitSoundEnum.SPEC_MAX.getFile();
+						soundToPlay = loadCustomSound(HitSoundEnum.SPEC_MAX.getFile());
+						if (soundToPlay != null)
+							log.debug("Assigned custom spec max sound");
+						else
+							soundToPlay = loadDefaultSound(DEFAULT_SPEC_MAX_FILE);
 					}
 					if (config.bDaggerMaxBoolean() || config.bgsMaxBoolean() || config.dwhMaxBoolean()) {
 						specialAttackHit(specialWeapon, lastSpecHitsplat, lastSpecTarget);
 					}
 					log.debug("Playing maxed spec sound");
-					playCustomSound(soundToPlay);
-					skip = false;
-					soundToPlay = null;
-					maxed = false;
 				} else {
 					specialAttackHit(specialWeapon, lastSpecHitsplat, lastSpecTarget);
 					log.debug("Playing hit spec sound");
-					playCustomSound(soundToPlay);
-					skip = false;
-					soundToPlay = null;
-					maxed = false;
 				}
 			} else if (lastSpecHitsplat.getAmount() == 0 && config.anySpecMissBoolean()) {
 				boolean specSound = specialAttackHit(specialWeapon, lastSpecHitsplat, lastSpecTarget);
 				if (specSound) {
 					log.debug("Playing spec equal to 0 sound");
-					playCustomSound(soundToPlay);
-					soundToPlay = null;
 				}
 			}
-
-			specialWeapon = null;
-			lastSpecHitsplat = null;
-			lastSpecTarget = null;
 		} else if (maxed) {
 			log.debug("Playing maxed sound");
-			playCustomSound(soundToPlay);
-			soundToPlay = null;
-			maxed = false;
 		} else if (soundToPlay != null) {
 			log.debug("Playing sound");
-			playCustomSound(soundToPlay);
-			soundToPlay = null;
-			maxed = false;
+		}
+		if (soundToPlay != null) {
+		playCustomSound(soundToPlay);
+		specialWeapon = null;
+		lastSpecHitsplat = null;
+		lastSpecTarget = null;
+		maxed = false;
+		soundToPlay = null;
 		}
 	}
 
@@ -219,70 +207,67 @@ public class AttackSoundNotificationsPlugin extends Plugin {
 		log.info("BLOCK_ME");
 		if (config.missBoolean()) {
 			log.debug("Queueing missed attack sound fallback");
-			if (customSoundExists(HitSoundEnum.MISS.getFile())) {
-				log.debug("Found custom miss sound");
-				soundToPlay = HitSoundEnum.MISS.getFile();
-			} else
-				soundToPlay = DEFAULT_MISS_FILE;
+			try {
+				soundToPlay = new BufferedInputStream(new FileInputStream(HitSoundEnum.MISS.getFile()));
+			} catch (FileNotFoundException e) {
+				soundToPlay = loadDefaultSound(DEFAULT_MISS_FILE);
+			}
 		}
 	}
 
 	private void max() {
 		if (config.maxBoolean()) {
 			log.debug("DAMAGE_MAX_ME");
-			if (customSoundExists(HitSoundEnum.MAX.getFile())) {
-				log.debug("Found custom maxsound");
-				soundToPlay = HitSoundEnum.MAX.getFile();
-			} else
-				soundToPlay = DEFAULT_MAX_HIT_FILE;
+			soundToPlay = loadCustomSound(HitSoundEnum.MAX.getFile());
+			if (soundToPlay != null) log.debug("Found custom maxsound");
+			else soundToPlay = loadDefaultSound(DEFAULT_MAX_HIT_FILE);
 			maxed = true;
 		}
 	}
 
-	private synchronized boolean playCustomSound(File fileName) {
-		long currentMTime = fileName.exists() ? fileName.lastModified()
-				: CLIP_MTIME_BUILTIN;
-		if (clip == null || currentMTime != lastClipMTime || !clip.isOpen()) {
+	private synchronized boolean playCustomSound(InputStream streamName) {
+		if (clip != null) {
+			clip.stop();
+			clip.flush();
+			clip.close();
+			clip = null;
+		}
+
+		if (streamName != null) {
 			try {
-				if (clip == null) {
-					clip = AudioSystem.getClip();
-				} else {
-					clip.stop();
-					clip.flush();
-					clip.close();
-				}
+				clip = AudioSystem.getClip();
 			} catch (LineUnavailableException e) {
-				lastClipMTime = CLIP_MTIME_UNLOADED;
 				log.warn("Unable to play sound", e);
 				return false;
 			}
-			lastClipMTime = currentMTime;
-			if (!tryLoadCustomSound(fileName)) {
+			if (!tryLoadCustomSoundFile(streamName)) {
 				return false;
 			}
 		}
-		clip.setFramePosition(0);
-		log.debug("Starting clip");
 		clip.start();
 		return true;
 	}
 
-	private boolean customSoundExists(File fileName) {
-		if (fileName.exists()) return true;
+	private boolean tryLoadCustomSoundFile(InputStream streamName) {
+		try (AudioInputStream sound = AudioSystem.getAudioInputStream(streamName)) {
+			clip.open(sound);
+			return true;
+		} catch (UnsupportedAudioFileException | IOException | LineUnavailableException e) {
+			log.warn("Unable to load sound", e);
+		}
 		return false;
 	}
 
-	private boolean tryLoadCustomSound(File fileName) {
-		if (fileName.exists()) {
-			try (InputStream fileStream = new BufferedInputStream(new FileInputStream(fileName));
-					AudioInputStream sound = AudioSystem.getAudioInputStream(fileStream)) {
-				clip.open(sound);
-				return true;
-			} catch (UnsupportedAudioFileException | IOException | LineUnavailableException e) {
-				log.warn("Unable to load sound", e);
-			}
+	private InputStream  loadDefaultSound(String filePath) {
+		return AttackSoundNotificationsPlugin.class.getResourceAsStream(filePath);
+	}
+
+	private BufferedInputStream loadCustomSound(File fileName) {
+		try {
+			return new BufferedInputStream(new FileInputStream(fileName));
+		} catch (FileNotFoundException e) {
+			return null;
 		}
-		return false;
 	}
 
 	private SpecialWeapon usedSpecialWeapon() {
@@ -343,55 +328,57 @@ public class AttackSoundNotificationsPlugin extends Plugin {
 		int[] arclightItemIds = SpecialWeapon.ARCLIGHT.getItemID();
 		int[] boneDaggerItemIds = SpecialWeapon.BONE_DAGGER.getItemID();
 		if (config.useCustomSpecSound()) {
+			// Arclight
 			if (arclightItemIds[0] == specialWeapon.getItemID()[0]) {
 				if (hitsplat.getAmount() == 0 && config.arclightMissBoolean()) {
 					log.debug("Arclight spec missed");
-					if (customSoundExists(HitSoundEnum.ARCLIGHT_MISS.getFile())) {
+					soundToPlay = loadCustomSound(HitSoundEnum.ARCLIGHT_MISS.getFile());
+					if (soundToPlay != null)
 						log.debug("Found custom Arclight miss sound");
-						soundToPlay = HitSoundEnum.ARCLIGHT_MISS.getFile();
-					} else
-						soundToPlay = DEFAULT_ARCLIGHT_MISS_FILE;
+					else
+						soundToPlay = loadDefaultSound(DEFAULT_ARCLIGHT_MISS_FILE);
 					return true;
 				}
 				if (hitsplat.getAmount() != 0 && config.arclightHitBoolean()) {
 					log.debug("Arclight spec hit");
-					if (customSoundExists(HitSoundEnum.ARCLIGHT_HIT.getFile())) {
+					soundToPlay = loadCustomSound(HitSoundEnum.ARCLIGHT_HIT.getFile());
+					if (soundToPlay != null)
 						log.debug("Found custom Arclight hit sound");
-						soundToPlay = HitSoundEnum.ARCLIGHT_HIT.getFile();
-					} else
-						soundToPlay = DEFAULT_ARCLIGHT_HIT_FILE;
+					else
+						soundToPlay = loadDefaultSound(DEFAULT_ARCLIGHT_HIT_FILE);
 					return true;
 				}
 			}
-
+			// DWH
 			if (dwhItemIds[0] == specialWeapon.getItemID()[0] || dwhItemIds[1] == specialWeapon.getItemID()[0]) {
 				if (hitsplat.getAmount() != 0 && config.dwhHitBoolean()) {
 					log.debug("DWH spec hit");
 					if (maxed) {
-						if (customSoundExists(HitSoundEnum.DWH_MAX.getFile())) {
+						soundToPlay = loadCustomSound(HitSoundEnum.DWH_MAX.getFile());
+						if (soundToPlay != null)
 							log.debug("Found custom DWH max sound");
-							soundToPlay = HitSoundEnum.DWH_MAX.getFile();
-						} else
-							soundToPlay = DEFAULT_DWH_MAX_FILE;
+						else
+							soundToPlay = loadDefaultSound(DEFAULT_DWH_MAX_FILE);
 						log.debug("Assigned sound to DWH max");
 						skip = true;
+						return true;
 					} else {
-						if (customSoundExists(HitSoundEnum.DWH_HIT.getFile())) {
+						soundToPlay = loadCustomSound(HitSoundEnum.DWH_HIT.getFile());
+						if (soundToPlay != null)
 							log.debug("Found custom DWH hit sound");
-							soundToPlay = HitSoundEnum.DWH_HIT.getFile();
-						} else
-							soundToPlay = DEFAULT_DWH_HIT_FILE;
+						else
+							soundToPlay = loadDefaultSound(DEFAULT_DWH_HIT_FILE);
 						log.debug("Assigned sound to DWH hit");
+						return true;
 					}
-					return true;
 				}
 				if (hitsplat.getAmount() == 0 && config.dwhMissBoolean()) {
 					log.debug("DWH spec missed");
-					if (customSoundExists(HitSoundEnum.DWH_MISS.getFile())) {
+					soundToPlay = loadCustomSound(HitSoundEnum.DWH_MISS.getFile());
+					if (soundToPlay != null)
 						log.debug("Found custom DWH miss sound");
-						soundToPlay = HitSoundEnum.DWH_MISS.getFile();
-					} else
-						soundToPlay = DEFAULT_DWH_MISS_FILE;
+					else
+						soundToPlay = loadCustomSound(HitSoundEnum.DWH_MISS.getFile());
 					return true;
 				}
 			}
@@ -400,30 +387,33 @@ public class AttackSoundNotificationsPlugin extends Plugin {
 				if (hitsplat.getAmount() != 0 && config.bgsHitBoolean()) {
 					log.debug("BGS spec hit");
 					if (maxed) {
-						if (customSoundExists(HitSoundEnum.BGS_MAX.getFile())) {
-							log.debug("Found custom BGS max sound");
-							soundToPlay = HitSoundEnum.BGS_MAX.getFile();
-						} else
-							soundToPlay = DEFAULT_BGS_MAX_FILE;
+						soundToPlay = loadCustomSound(HitSoundEnum.BGS_MAX.getFile());
+						if (soundToPlay != null)
+							log.debug("Found custom bgs max sound");
+						else
+							soundToPlay = loadDefaultSound(DEFAULT_BGS_MAX_FILE);
+						skip = true;
 						log.debug("Assigned sound to BGS max");
 						skip = true;
 					} else {
-						if (customSoundExists(HitSoundEnum.BGS_HIT.getFile())) {
-							log.debug("Found custom BGS hit sound");
-							soundToPlay = HitSoundEnum.BGS_HIT.getFile();
-						} else
-							soundToPlay = DEFAULT_BGS_HIT_FILE;
+						soundToPlay = loadCustomSound(HitSoundEnum.BGS_HIT.getFile());
+						if (soundToPlay != null)
+							log.debug("Found custom bgs hit sound");
+						else
+							soundToPlay = loadDefaultSound(DEFAULT_BGS_HIT_FILE);
+						skip = true;
 						log.debug("Assigned sound to BGS hit");
 					}
 					return true;
 				}
 				if (hitsplat.getAmount() == 0 && config.bgsMissBoolean()) {
 					log.debug("BGS spec missed");
-					if (customSoundExists(HitSoundEnum.BGS_MISS.getFile())) {
-						log.debug("Found custom BGS miss sound");
-						soundToPlay = HitSoundEnum.BGS_MISS.getFile();
-					} else
-						soundToPlay = DEFAULT_BGS_MISS_FILE;
+					soundToPlay = loadCustomSound(HitSoundEnum.BGS_MISS.getFile());
+					if (soundToPlay != null)
+						log.debug("Found custom bgs max sound");
+					else
+						soundToPlay = loadDefaultSound(DEFAULT_BGS_MISS_FILE);
+					skip = true;
 					return true;
 				}
 
@@ -436,46 +426,46 @@ public class AttackSoundNotificationsPlugin extends Plugin {
 				if (hitsplat.getAmount() != 0 && config.bDaggerHitBoolean()) {
 					log.debug("Bone dagger spec hit");
 					if (maxed) {
-						if (customSoundExists(HitSoundEnum.BONE_DAGGER_MAX.getFile())) {
+						soundToPlay = loadCustomSound(HitSoundEnum.BONE_DAGGER_MAX.getFile());
+						if (soundToPlay != null)
 							log.debug("Found custom bone dagger max sound");
-							soundToPlay = HitSoundEnum.BONE_DAGGER_MAX.getFile();
-						} else
-							soundToPlay = DEFAULT_BONE_DAGGER_MAX_FILE;
+						else
+							soundToPlay = loadDefaultSound(DEFAULT_BONE_DAGGER_MAX_FILE);
 						skip = true;
 					} else {
-						if (customSoundExists(HitSoundEnum.BONE_DAGGER_HIT.getFile())) {
+						soundToPlay = loadCustomSound(HitSoundEnum.BONE_DAGGER_HIT.getFile());
+						if (soundToPlay != null)
 							log.debug("Found custom bone dagger hit sound");
-							soundToPlay = HitSoundEnum.BONE_DAGGER_HIT.getFile();
-						} else
-							soundToPlay = DEFAULT_BONE_DAGGER_HIT_FILE;
+						else
+							soundToPlay = loadDefaultSound(DEFAULT_BONE_DAGGER_HIT_FILE);
 					}
 					return true;
 				}
 				if (hitsplat.getAmount() == 0 && config.bDaggerMissBoolean()) {
 					log.debug("Bone dagger spec missed");
-					if (customSoundExists(HitSoundEnum.BONE_DAGGER_MISS.getFile())) {
+					soundToPlay = loadCustomSound(HitSoundEnum.BONE_DAGGER_MISS.getFile());
+					if (soundToPlay != null)
 						log.debug("Found custom bone dagger miss sound");
-						soundToPlay = HitSoundEnum.BONE_DAGGER_MISS.getFile();
-					} else
-						soundToPlay = DEFAULT_BONE_DAGGER_MISS_FILE;
+					else
+						soundToPlay = loadDefaultSound(DEFAULT_BONE_DAGGER_MISS_FILE);
 					return true;
 				}
 			}
 		} else {
 			if (hitsplat.getAmount() != 0) {
-				if (customSoundExists(HitSoundEnum.SPEC_HIT.getFile())) {
+				soundToPlay = loadCustomSound(HitSoundEnum.SPEC_HIT.getFile());
+				if (soundToPlay != null)
 					log.debug("Found custom spec hit sound");
-					soundToPlay = HitSoundEnum.SPEC_HIT.getFile();
-				} else
-					soundToPlay = DEFAULT_SPEC_HIT_FILE;
+				else
+					soundToPlay = loadDefaultSound(DEFAULT_SPEC_HIT_FILE);
 				return true;
 			}
 			if (hitsplat.getAmount() == 0) {
-				if (customSoundExists(HitSoundEnum.SPEC_MISS.getFile())) {
+				soundToPlay = loadCustomSound(HitSoundEnum.SPEC_MISS.getFile());
+				if (soundToPlay != null)
 					log.debug("Found custom spec hit sound");
-					soundToPlay = HitSoundEnum.SPEC_MISS.getFile();
-				} else
-					soundToPlay = DEFAULT_SPEC_MISS_FILE;
+				else
+					soundToPlay = loadDefaultSound(DEFAULT_SPEC_MISS_FILE);
 				return true;
 			}
 		}
