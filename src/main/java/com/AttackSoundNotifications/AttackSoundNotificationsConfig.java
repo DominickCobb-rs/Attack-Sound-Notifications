@@ -98,8 +98,8 @@ public interface AttackSoundNotificationsConfig extends Config {
 	///////////////////////////////
 	@ConfigItem(
 			keyName = "specDefaultSoundBoolean",
-			name = "Per-weapon sound",
-			description = "Use an individual sound for each spec weapon",
+			name = "Custom spec sounds",
+			description = "Use an different sounds for each spec option",
 			section = "weaponSoundSection",
 			position = 1
 	)
@@ -236,21 +236,32 @@ public interface AttackSoundNotificationsConfig extends Config {
 			position = 5,
 			warning = "Reset this field if you accidentally remove it."
 	)
-	default String customHitSound() {return "NOTE: THIS IS A WIP. DON'T EXPECT ANYTHING TO CHANGE WHILE THIS MESSAGE STILL EXISTS\n" +
-			"Adding a custom sound\n" +
-			"1a. Navigate to your .runelite folder\n" +
-			"1b. You can right-click the screenshot button in the top right of the runelite client.\n" +
-			"1c. Then open screenshot folder, and navigate to the .runelite directory.\n" +
-			"2. Create a folder called 'attacknotifications'.\n" +
-			"2a. Create a subfolder for the type you want {arclight_spec_hit}.\n" +
-			"3. Add your sound .wav file in the sub-folder .\n" +
-			"\n" +
-			"Acceptable Folder Names:\n" +
-			"arclight_spec_hit\n" +
-			"arclight_spec_miss\n" +
-			"dwh_spec_hit\n" +
-			"dwh_spec_miss\n" +
-			"bgs_spec_hit\n" +
-			"bgs_spec_miss\n" +
-			"max\n";}
+	default String customHitSound() {
+		return "Adding a custom sound\n" +
+		"1a. Navigate to your .runelite folder\n" +
+		"1b. You can right-click the screenshot button in the top right of the runelite client.\n" +
+		"1c. Then open screenshot folder, and navigate to the .runelite directory.\n" +
+		"2. Create a folder called 'attacknotifications'.\n" +
+		"3. Add your sound .wav file in the folder.\n" +
+		"\n" +
+		"Acceptable File Names:\n" +
+		"max.wav\n" +
+		"miss.wav\n" +
+		"spec_miss.wav\n" +
+		"spec_hit.wav\n" +
+		"spec_max.wav\n" +
+		"arclight_spec_miss.wav\n" +
+		"arclight_spec_hit.wav\n" +
+		"dwh_spec_miss.wav\n" +
+		"dwh_spec_hit.wav\n" +
+		"dwh_spec_max.wav\n" +
+		"bgs_spec_miss.wav\n" +
+		"bgs_spec_hit.wav\n" +
+		"bgs_spec_max.wav\n" +
+		"bone_dagger_spec_miss.wav\n" +
+		"bone_dagger_spec_hit.wav\n" +
+		"bone_dagger_spec_default.wav\n";
+	}
 }
+
+

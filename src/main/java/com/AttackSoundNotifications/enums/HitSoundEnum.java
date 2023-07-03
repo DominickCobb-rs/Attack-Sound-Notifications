@@ -10,7 +10,7 @@ import java.io.File;
 @RequiredArgsConstructor
 public enum HitSoundEnum {
     MAX("Max", AttackSoundNotificationsPlugin.MAX_HIT_FILE),
-    DEFAULT_MISS("Miss", AttackSoundNotificationsPlugin.DEFAULT_MISS_FILE),
+    MISS("Miss", AttackSoundNotificationsPlugin.MISS_FILE),
     SPEC_MISS("Miss", AttackSoundNotificationsPlugin.SPEC_MISS_FILE),
     SPEC_HIT("Hit", AttackSoundNotificationsPlugin.SPEC_HIT_FILE),
     SPEC_MAX("Hit", AttackSoundNotificationsPlugin.SPEC_MAX_FILE),

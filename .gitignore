@@ -8,3 +8,6 @@ build
 nbactions.xml
 nb-configuration.xml
 nbproject/
+.vscode/
+src/main/java/com/AttackSoundNotifications/ui
+src/main/java/com/AttackSoundNotifications/SoundSwap.java
