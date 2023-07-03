@@ -54,7 +54,6 @@ public class AttackSoundNotificationsPlugin extends Plugin {
 	private NPC lastSpecTarget;
 	private boolean maxed = false;
 	private InputStream soundToPlay;
-	private boolean skip = false;
 	private static final String BASE_DIRECTORY = System.getProperty("user.home") + "/.runelite/attacknotifications/";
 
 	// Custom Files //
@@ -111,14 +110,14 @@ public class AttackSoundNotificationsPlugin extends Plugin {
 			log.debug("Special attack detected");
 			if (lastSpecHitsplat.getAmount() > 0 && config.anySpecHitBoolean()) {
 				if (maxed && config.prioritizeMax()) {
-					if (config.globalSpecMaxBoolean() && !skip) {
+					if (config.globalSpecMaxBoolean()) {
 						soundToPlay = loadCustomSound(HitSoundEnum.SPEC_MAX.getFile());
 						if (soundToPlay != null)
 							log.debug("Assigned custom spec max sound");
 						else
 							soundToPlay = loadDefaultSound(DEFAULT_SPEC_MAX_FILE);
 					}
-					if (config.bDaggerMaxBoolean() || config.bgsMaxBoolean() || config.dwhMaxBoolean()) {
+					if ((config.bDaggerMaxBoolean() || config.bgsMaxBoolean() || config.dwhMaxBoolean()) && !config.useCustomSpecSound()) {
 						specialAttackHit(specialWeapon, lastSpecHitsplat, lastSpecTarget);
 					}
 					log.debug("Playing maxed spec sound");
@@ -138,12 +137,12 @@ public class AttackSoundNotificationsPlugin extends Plugin {
 			log.debug("Playing sound");
 		}
 		if (soundToPlay != null) {
-		playCustomSound(soundToPlay);
-		specialWeapon = null;
-		lastSpecHitsplat = null;
-		lastSpecTarget = null;
-		maxed = false;
-		soundToPlay = null;
+			playCustomSound(soundToPlay);
+			specialWeapon = null;
+			lastSpecHitsplat = null;
+			lastSpecTarget = null;
+			maxed = false;
+			soundToPlay = null;
 		}
 	}
 
@@ -197,6 +196,7 @@ public class AttackSoundNotificationsPlugin extends Plugin {
 					miss();
 					break;
 				case HitsplatID.DAMAGE_MAX_ME:
+					maxed = true;
 					max();
 					break;
 			}
@@ -219,9 +219,10 @@ public class AttackSoundNotificationsPlugin extends Plugin {
 		if (config.maxBoolean()) {
 			log.debug("DAMAGE_MAX_ME");
 			soundToPlay = loadCustomSound(HitSoundEnum.MAX.getFile());
-			if (soundToPlay != null) log.debug("Found custom maxsound");
-			else soundToPlay = loadDefaultSound(DEFAULT_MAX_HIT_FILE);
-			maxed = true;
+			if (soundToPlay != null)
+				log.debug("Found custom maxsound");
+			else
+				soundToPlay = loadDefaultSound(DEFAULT_MAX_HIT_FILE);
 		}
 	}
 
@@ -244,6 +245,13 @@ public class AttackSoundNotificationsPlugin extends Plugin {
 				return false;
 			}
 		}
+
+		FloatControl volume = (FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN);
+		float gain = 20f * (float) Math.log10(config.Volume() / 100f);
+		gain = Math.min(gain, volume.getMaximum());
+		gain = Math.max(gain, volume.getMinimum());
+		volume.setValue(gain);
+
 		clip.start();
 		return true;
 	}
@@ -258,7 +266,7 @@ public class AttackSoundNotificationsPlugin extends Plugin {
 		return false;
 	}
 
-	private InputStream  loadDefaultSound(String filePath) {
+	private InputStream loadDefaultSound(String filePath) {
 		return AttackSoundNotificationsPlugin.class.getResourceAsStream(filePath);
 	}
 
@@ -360,7 +368,6 @@ public class AttackSoundNotificationsPlugin extends Plugin {
 						else
 							soundToPlay = loadDefaultSound(DEFAULT_DWH_MAX_FILE);
 						log.debug("Assigned sound to DWH max");
-						skip = true;
 						return true;
 					} else {
 						soundToPlay = loadCustomSound(HitSoundEnum.DWH_HIT.getFile());
@@ -392,16 +399,14 @@ public class AttackSoundNotificationsPlugin extends Plugin {
 							log.debug("Found custom bgs max sound");
 						else
 							soundToPlay = loadDefaultSound(DEFAULT_BGS_MAX_FILE);
-						skip = true;
 						log.debug("Assigned sound to BGS max");
-						skip = true;
 					} else {
 						soundToPlay = loadCustomSound(HitSoundEnum.BGS_HIT.getFile());
 						if (soundToPlay != null)
 							log.debug("Found custom bgs hit sound");
 						else
 							soundToPlay = loadDefaultSound(DEFAULT_BGS_HIT_FILE);
-						skip = true;
+
 						log.debug("Assigned sound to BGS hit");
 					}
 					return true;
@@ -413,7 +418,6 @@ public class AttackSoundNotificationsPlugin extends Plugin {
 						log.debug("Found custom bgs max sound");
 					else
 						soundToPlay = loadDefaultSound(DEFAULT_BGS_MISS_FILE);
-					skip = true;
 					return true;
 				}
 
@@ -431,7 +435,6 @@ public class AttackSoundNotificationsPlugin extends Plugin {
 							log.debug("Found custom bone dagger max sound");
 						else
 							soundToPlay = loadDefaultSound(DEFAULT_BONE_DAGGER_MAX_FILE);
-						skip = true;
 					} else {
 						soundToPlay = loadCustomSound(HitSoundEnum.BONE_DAGGER_HIT.getFile());
 						if (soundToPlay != null)

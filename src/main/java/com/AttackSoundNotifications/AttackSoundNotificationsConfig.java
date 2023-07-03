@@ -4,35 +4,51 @@ import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
 import net.runelite.client.config.ConfigSection;
+import net.runelite.client.config.Range;
 
 @ConfigGroup("combateventsnotifier")
 public interface AttackSoundNotificationsConfig extends Config {
 	////////////////////////
 	// Section Definition //
 	////////////////////////
+	@Range(
+		min = 0,
+		max = 200
+	)
+	@ConfigItem(
+		position = 1,
+		keyName = "Volume",
+		name = "Volume",
+		description = "Control how loud the audio should be"
+	)
+	default int Volume()
+	{
+		return 25;
+	}
+	
 	@ConfigSection(
-			position = 1,
+			position = 2,
 			name = "Notification Toggles",
 			description = "Toggle sounds on and off"
 	)
 	String notificationToggleSection = "notificationToggleSection";
 
 	@ConfigSection(
-			position = 2,
+			position = 3,
 			name = "Spec Miss Sounds",
 			description = "Specify what spec misses should play audio"
 	)
 	String missSoundSection = "missSoundSection";
 
 	@ConfigSection(
-			position = 3,
+			position = 4,
 			name = "Spec Hit Sounds",
 			description = "Specify what spec hits should play audio"
 	)
 	String hitSoundSection = "hitSoundSection";
 
 	@ConfigSection(
-			position = 3,
+			position = 5,
 			name = "Spec Max Sounds",
 			description = "Specify what spec max should play audio"
 	)
@@ -246,7 +262,7 @@ public interface AttackSoundNotificationsConfig extends Config {
 			name = "Set Custom Sound",
 			description = "Instructions to set custom sounds",
 			section = "notificationSoundSection",
-			position = 5,
+			position = 6,
 			warning = "Reset this field if you accidentally remove it."
 	)
 	default String customHitSound() {
