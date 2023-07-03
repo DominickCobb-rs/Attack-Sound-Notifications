@@ -1,5 +1,6 @@
 package com.AttackSoundNotifications;
 
+import com.AttackSoundNotifications.AttackSoundNotificationsPlugin;
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
@@ -8,6 +9,71 @@ import net.runelite.client.config.Range;
 
 @ConfigGroup("combateventsnotifier")
 public interface AttackSoundNotificationsConfig extends Config {
+	public enum MaxSoundOption {
+		NONE("None"),
+		GLOBALMAX("Global Max"),
+		GLOBALSPECIAL("Special Max"),
+		WEAPONSPECIFIC("Weapon Specific");
+
+		private final String displayText;
+
+		MaxSoundOption(String displayText) {
+			this.displayText = displayText;
+		}
+
+		public String getText(){
+			return displayText;
+		}
+
+		@Override
+		public String toString() {
+			return displayText;
+		}
+	}
+
+	public enum HitSoundOption {
+		NONE("None"),
+		GLOBALSPECIAL("Special Hit"),
+		WEAPONSPECIFIC("Weapon Specific");
+
+		private final String displayText;
+
+		HitSoundOption(String displayText) {
+			this.displayText = displayText;
+		}
+
+		public String getText(){
+			return displayText;
+		}
+
+		@Override
+		public String toString() {
+			return displayText;
+		}
+	}
+
+	public enum MissSoundOption {
+		NONE("None"),
+		GLOBALMISS("Global Miss"),
+		GLOBALSPECIAL("Special Miss"),
+		WEAPONSPECIFIC("Weapon Specific");
+
+		private final String displayText;
+
+		MissSoundOption(String displayText) {
+			this.displayText = displayText;
+		}
+
+		public String getText(){
+			return displayText;
+		}
+
+		@Override
+		public String toString() {
+			return displayText;
+		}
+	}
+	
 	////////////////////////
 	// Section Definition //
 	////////////////////////
@@ -58,17 +124,6 @@ public interface AttackSoundNotificationsConfig extends Config {
 	/////////////////////////////////
 
 	@ConfigItem(
-			keyName = "specDefaultSoundBoolean",
-			name = "Custom spec sounds",
-			description = "Use an different sounds for each spec option",
-			section = "notificationToggleSection",
-			position = 1
-	)
-	default boolean useCustomSpecSound(){
-		return true;
-	}
-
-	@ConfigItem(
 			keyName = "missBoolean",
 			name = "Missed attacks",
 			description = "Anytime you hit 0 on your opponent",
@@ -90,170 +145,127 @@ public interface AttackSoundNotificationsConfig extends Config {
 		return true;
 	}
 
-	@ConfigItem(
-			keyName = "anySpecMissBoolean",
-			name = "Spec Miss",
-			description = "Anytime you miss spec\n Will still play default sound if Missed attacks is enabled",
-			section = "notificationToggleSection",
-			position = 4
-	)
-	default boolean anySpecMissBoolean(){
-		return true;
-	}
-
-	@ConfigItem(
-			keyName = "anySpecHitBoolean",
-			name = "Spec Hit",
-			description = "Anytime you land spec\n",
-			section = "notificationToggleSection",
-			position = 5
-	)
-	default boolean anySpecHitBoolean(){
-		return true;
-	}
-
-	@ConfigItem(
-			keyName = "prioritizeMax",
-			name = "Prioritize max over spec",
-			description = "Play max sounds for max hits over custom weapon sounds, plays the custom sound if Spec Max Hit is enabled",
-			section = "notificationToggleSection",
-			position = 6
-	)
-	default boolean prioritizeMax(){
-		return true;
-	}
-
-	@ConfigItem(
-			keyName = "specMaxBoolean",
-			name = "Spec Max Hit",
-			description = "Replaces the default max hit sound with a custom one if Prioritize max is enabled",
-			section = "notificationToggleSection",
-			position = 7
-	)
-	default boolean globalSpecMaxBoolean(){
-		return true;
-	}
-
 	// Miss options
 	@ConfigItem(
-			keyName = "arclightMissBoolean",
+			keyName = "arclightMissOption",
 			name = "Arclight",
 			description = "Anytime you miss an Arclight spec",
 			section = "missSoundSection",
 			position = 1
 	)
-	default boolean arclightMissBoolean(){
-		return true;
+	default MissSoundOption arclightMissOption() {
+		return MissSoundOption.WEAPONSPECIFIC;
 	}
 
 	@ConfigItem(
-			keyName = "dwhMissBoolean",
-			name = "Dragon Warhammer",
+			keyName = "dwhMissOption",
+			name = "DWH",
 			description = "Anytime you miss a dwh spec",
 			section = "missSoundSection",
 			position = 2
 	)
-	default boolean dwhMissBoolean(){
-		return true;
+	default MissSoundOption dwhMissOption() {
+		return MissSoundOption.WEAPONSPECIFIC;
 	}
 
 	@ConfigItem(
-			keyName = "bgsMissBoolean",
-			name = "Bandos Godsword",
+			keyName = "bgsMissOption",
+			name = "BGS",
 			description = "Anytime you miss a bgs spec",
 			section = "missSoundSection",
 			position = 3
 	)
-	default boolean bgsMissBoolean(){
-		return true;
+	default MissSoundOption bgsMissOption() {
+		return MissSoundOption.WEAPONSPECIFIC;
 	}
 
 	@ConfigItem(
 			keyName = "bDaggerMissBoolean",
-			name = "Bone Dagger",
+			name = "B Dagger",
 			description = "Anytime you miss a bone dagger spec",
 			section = "missSoundSection",
 			position = 4
 	)
-	default boolean bDaggerMissBoolean(){
-		return true;
+	default MissSoundOption bDaggerMissOption() {
+		return MissSoundOption.WEAPONSPECIFIC;
 	}
+
 	// Hit options
 	@ConfigItem(
-			keyName = "arclightHitBoolean",
+			keyName = "arclightHitOption",
 			name = "Arclight",
 			description = "Anytime you land an Arclight spec",
 			section = "hitSoundSection",
 			position = 1
 	)
-	default boolean arclightHitBoolean(){
-		return true;
+	default HitSoundOption arclightHitOption() {
+		return HitSoundOption.WEAPONSPECIFIC;
 	}
 
 	@ConfigItem(
-			keyName = "dwhHitBoolean",
-			name = "Dragon Warhammer",
+			keyName = "dwhHitOption",
+			name = "DWH",
 			description = "Anytime you land a DWH spec",
 			section = "hitSoundSection",
 			position = 2
 	)
-	default boolean dwhHitBoolean(){
-		return true;
+	default HitSoundOption dwhHitOption() {
+		return HitSoundOption.WEAPONSPECIFIC;
 	}
 
 	@ConfigItem(
-			keyName = "bgsHitBoolean",
-			name = "Bandos Godsword",
+			keyName = "bgsHitOption",
+			name = "BGS",
 			description = "Anytime you land a BGS spec",
 			section = "hitSoundSection",
 			position = 3
 	)
-	default boolean bgsHitBoolean(){
-		return true;
+	default HitSoundOption bgsHitOption() {
+		return HitSoundOption.WEAPONSPECIFIC;
 	}
 
 	@ConfigItem(
-			keyName = "bDaggerHitBoolean",
-			name = "Bone Dagger",
+			keyName = "bDaggerHitOption",
+			name = "B Dagger",
 			description = "Anytime you land a bone dagger spec",
 			section = "hitSoundSection",
 			position = 4
 	)
-	default boolean bDaggerHitBoolean(){
-		return true;
+	default HitSoundOption bDaggerHitOption() {
+		return HitSoundOption.WEAPONSPECIFIC;
 	}
 	// Max hit options
 	@ConfigItem(
-			keyName = "dwhMaxBoolean",
-			name = "Dragon Warhammer",
+			keyName = "dwhMaxOption",
+			name = "DWH",
 			description = "Anytime you max a DWH spec",
 			section = "maxSoundSection",
 			position = 1
 	)
-	default boolean dwhMaxBoolean(){
-		return true;
+	default MaxSoundOption dwhMaxOption() {
+		return MaxSoundOption.WEAPONSPECIFIC;
 	}
 
 	@ConfigItem(
 			keyName = "bgsMaxBoolean",
-			name = "Bandos Godsword",
+			name = "BGS",
 			description = "Anytime you max a BGS spec",
 			section = "maxSoundSection",
 			position = 2
 	)
-	default boolean bgsMaxBoolean(){
-		return true;
+	default MaxSoundOption bgsMaxOption() {
+		return MaxSoundOption.WEAPONSPECIFIC;
 	}
 
 	@ConfigItem(
 			keyName = "bDaggerMaxBoolean",
-			name = "Bone Dagger",
+			name = "B Dagger",
 			description = "Anytime you max a bone dagger spec",
 			section = "maxSoundSection",
 			position = 3
 	)
-	default boolean bDaggerMaxBoolean(){
-		return true;
+	default MaxSoundOption bDaggerMaxOption() {
+		return MaxSoundOption.WEAPONSPECIFIC;
 	}
 	
 	// Instructions to add custom sounds
