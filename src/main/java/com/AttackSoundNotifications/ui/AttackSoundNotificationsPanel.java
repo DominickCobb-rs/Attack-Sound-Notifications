@@ -250,7 +250,7 @@ public class AttackSoundNotificationsPanel extends PluginPanel {
                     case MISS: {
                         if (!usedSpecialAttack) {
                             if (hitType == HitsplatID.BLOCK_ME) {
-                                if (data.getSoundChoice() == SoundOption.CUSTOM_SOUND) {
+                                if (data.getSoundOption() == SoundOption.CUSTOM_SOUND) {
                                     returnSound = loadCustomSound(data.getSoundFilePath());
                                     if (returnSound != null)
                                         log.debug("Found custom sound");
@@ -263,7 +263,7 @@ public class AttackSoundNotificationsPanel extends PluginPanel {
                                             returnSound = null;
                                     }
                                 } else {
-                                    returnSound = getDefaultSoundChoice(data.getSoundReplacing());
+                                    returnSound = otherGetDefaultSoundChoice(data.getSoundOption());
                                 }
                                 return returnSound;
                             }
@@ -274,7 +274,7 @@ public class AttackSoundNotificationsPanel extends PluginPanel {
                         if (!usedSpecialAttack) {
                             log.debug("Max is being replaced");
                             if (hitType == HitsplatID.DAMAGE_MAX_ME) {
-                                if (data.getSoundChoice() == SoundOption.CUSTOM_SOUND) {
+                                if (data.getSoundOption() == SoundOption.CUSTOM_SOUND) {
                                     returnSound = loadCustomSound(data.getSoundFilePath());
                                     if (returnSound != null)
                                         log.debug("Found custom sound");
@@ -287,7 +287,7 @@ public class AttackSoundNotificationsPanel extends PluginPanel {
                                             returnSound = null;
                                     }
                                 } else {
-                                    returnSound = getDefaultSoundChoice(data.getSoundReplacing());
+                                    returnSound = otherGetDefaultSoundChoice(data.getSoundOption());
                                 }
                                 return returnSound;
                             }
@@ -297,7 +297,7 @@ public class AttackSoundNotificationsPanel extends PluginPanel {
                     case SPECIAL_MISS: {
                         if (usedSpecialAttack) {
                             if (hitType == HitsplatID.BLOCK_ME) {
-                                if (data.getSoundChoice() == SoundOption.CUSTOM_SOUND) {
+                                if (data.getSoundOption() == SoundOption.CUSTOM_SOUND) {
                                     returnSound = loadCustomSound(data.getSoundFilePath());
                                     if (returnSound != null)
                                         log.debug("Found custom sound");
@@ -310,7 +310,7 @@ public class AttackSoundNotificationsPanel extends PluginPanel {
                                             returnSound = null;
                                     }
                                 } else {
-                                    returnSound = getDefaultSoundChoice(data.getSoundReplacing());
+                                    returnSound = otherGetDefaultSoundChoice(data.getSoundOption());
                                 }
                                 return returnSound;
                             }
@@ -321,7 +321,7 @@ public class AttackSoundNotificationsPanel extends PluginPanel {
                     case SPECIAL_HIT: {
                         if (usedSpecialAttack) {
                             if (hitType == HitsplatID.DAMAGE_ME) {
-                                if (data.getSoundChoice() == SoundOption.CUSTOM_SOUND) {
+                                if (data.getSoundOption() == SoundOption.CUSTOM_SOUND) {
                                     returnSound = loadCustomSound(data.getSoundFilePath());
                                     if (returnSound != null)
                                         log.debug("Found custom sound");
@@ -334,7 +334,7 @@ public class AttackSoundNotificationsPanel extends PluginPanel {
                                             returnSound = null;
                                     }
                                 } else {
-                                    returnSound = getDefaultSoundChoice(data.getSoundReplacing());
+                                    returnSound = otherGetDefaultSoundChoice(data.getSoundOption());
                                 }
                                 return returnSound;
                             }
@@ -345,7 +345,7 @@ public class AttackSoundNotificationsPanel extends PluginPanel {
                     case SPECIAL_MAX: {
                         if (usedSpecialAttack) {
                             if (hitType == HitsplatID.DAMAGE_MAX_ME) {
-                                if (data.getSoundChoice() == SoundOption.CUSTOM_SOUND) {
+                                if (data.getSoundOption() == SoundOption.CUSTOM_SOUND) {
                                     returnSound = loadCustomSound(data.getSoundFilePath());
                                     if (returnSound != null)
                                         log.debug("Found custom sound");
@@ -358,34 +358,13 @@ public class AttackSoundNotificationsPanel extends PluginPanel {
                                             returnSound = null;
                                     }
                                 } else {
-                                    returnSound = getDefaultSoundChoice(data.getSoundReplacing());
+                                    returnSound = otherGetDefaultSoundChoice(data.getSoundOption());
                                 }
                                 return returnSound;
                             }
                         }
                     }
                 }
-            }
-        }
-        return null;
-    }
-
-    private InputStream getDefaultSoundChoice(Condition choice) {
-        switch (choice) {
-            case SPECIAL_HIT: {
-                return loadDefaultSound(DEFAULT_SPEC_HIT_FILE);
-            }
-            case SPECIAL_MAX: {
-                return loadDefaultSound(DEFAULT_SPEC_MAX_FILE);
-            }
-            case SPECIAL_MISS: {
-                return loadDefaultSound(DEFAULT_SPEC_MISS_FILE);
-            }
-            case MISS: {
-                return loadDefaultSound(DEFAULT_MISS_FILE);
-            }
-            case MAX: {
-                return loadDefaultSound(DEFAULT_MAX_FILE);
             }
         }
         return null;

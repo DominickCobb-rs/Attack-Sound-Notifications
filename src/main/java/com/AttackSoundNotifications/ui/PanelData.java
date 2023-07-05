@@ -46,7 +46,7 @@ public class PanelData {
         return soundFilePath.getText();
     }
 
-    public SoundOption getSoundChoice() {
+    public SoundOption getSoundOption() {
         return (SoundOption) soundChoice.getSelectedItem();
     }
 }

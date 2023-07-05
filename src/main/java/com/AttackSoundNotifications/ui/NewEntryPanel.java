@@ -511,10 +511,10 @@ public class NewEntryPanel extends JPanel {
         testSound.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (panelData.getSoundChoice() == SoundOption.CUSTOM_SOUND)
+                if (panelData.getSoundOption() == SoundOption.CUSTOM_SOUND)
                     parent.findCustomSound(panelData.getSoundFilePath());
                 else
-                    parent.playDefaultSound(panelData.getSoundChoice());
+                    parent.playDefaultSound(panelData.getSoundOption());
             }
         });
 
