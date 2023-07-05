@@ -118,7 +118,7 @@ import java.io.*;
 
 @Slf4j
 @PluginDescriptor(name = "Attack Sound Notifications", description = "A plugin that plays sounds based on hitsplats and special attacks", tags = {
-		"special", "sounds", "notifications" }, loadWhenOutdated = true, enabledByDefault = false)
+		"special", "sounds", "notifications" }, loadWhenOutdated = true, enabledByDefault = true)
 public class AttackSoundNotificationsPlugin extends Plugin {
 	@Inject
 	private Client client;
@@ -142,14 +142,10 @@ public class AttackSoundNotificationsPlugin extends Plugin {
 	private int specialPercentage;
 	private int specialWeapon;
 	private boolean specced=false;
-	// // Probably don't need hitsplatTick for our purposes, we're doing dummy work not calculations
-	// expected tick the hitsplat will happen on
-	//private int hitsplatTick;
 
 	// most recent hitsplat and the target it was on
 	// This should only ever be the hitsplat the player applies to another creature
 	private Hitsplat lastSpecHitsplat;
-	//private NPC lastSpecTarget;
 	private InputStream soundToPlay;
 
 	@Override
@@ -190,7 +186,6 @@ public class AttackSoundNotificationsPlugin extends Plugin {
 		specialWeapon = -1;
 		lastSpecHitsplat = null;
 		specced = false;
-		//lastSpecTarget = null;
 		soundToPlay = null;
 	}
 
@@ -208,15 +203,6 @@ public class AttackSoundNotificationsPlugin extends Plugin {
 
 		this.specialPercentage = specialPercentage;
 		
-		
-		// We don't need most of this stuff, but we do need it
-		// This event runs prior to player and npc updating, making getInteracting() too
-		// early to call..
-		// defer this with invokeLater(), but note that this will run after incrementing
-		// the server tick counter
-		// so we capture the current server tick counter here for use in computing the
-		// final hitsplat tick
-		//final int serverTicks = client.getTickCount();
 		clientThread.invokeLater(() -> {
 			ItemContainer equipment = client.getItemContainer(InventoryID.EQUIPMENT);
 			if (equipment != null) {
@@ -228,20 +214,6 @@ public class AttackSoundNotificationsPlugin extends Plugin {
 			} else specialWeapon = -1;
 			specced = true;
 			log.debug("Set specced to true");
-			//usedSpecialWeapon();
-
-			/*if (specialWeapon == -1) {
-				// unrecognized special attack weapon
-				return;
-			}
-
-			Actor target = client.getLocalPlayer().getInteracting();
-			lastSpecTarget = target instanceof NPC ? (NPC) target : null;
-			hitsplatTick = serverTicks + getHitDelay(specialWeapon, target);
-			*/
-			
-			/*log.debug("Special attack used - percent: {} weapon: {} server cycle {} hitsplat cycle {}",
-					specialPercentage, specialWeapon, serverTicks, hitsplatTick);*/
 		});
 	}
 
@@ -302,195 +274,6 @@ public class AttackSoundNotificationsPlugin extends Plugin {
 		}
 		return false;
 	}
-	
-	// We PROBABLY don't need this stuff
-	/*
-	private void usedSpecialWeapon() {
-		ItemContainer equipment = client.getItemContainer(InventoryID.EQUIPMENT);
-		if (equipment != null) {
-
-			Item weapon = equipment.getItem(EquipmentInventorySlot.WEAPON.getSlotIdx());
-			if (weapon != null) {
-				specialWeapon = weapon.getId();
-			} else specialWeapon = -1;
-		} else specialWeapon = -1;
-	}
-	
-	private int getHitDelay(int specialWeapon, Actor target) {
-		// DORGESHUUN_CROSSBOW is the only ranged wep we support, so everything else is
-		// just melee and delay 1
-		if (specialWeapon != ItemID.DORGESHUUN_CROSSBOW || target == null)
-			return 1;
-
-		Player player = client.getLocalPlayer();
-		if (player == null)
-			return 1;
-
-		WorldPoint playerWp = player.getWorldLocation();
-		if (playerWp == null)
-			return 1;
-
-		WorldArea targetArea = target.getWorldArea();
-		if (targetArea == null)
-			return 1;
-
-		final int distance = targetArea.distanceTo(playerWp);
-		// Dorgeshuun special attack projectile, anim delay, and hitsplat is 60 +
-		// distance * 3 with the projectile
-		// starting at 41 cycles. Since we are computing the delay when the spec var
-		// changes, and not when the
-		// projectile first moves, this should be 60 and not 19
-		final int cycles = 60 + distance * 3;
-		// The server performs no rounding and instead delays (cycles / 30) cycles from
-		// the next cycle
-		final int serverCycles = (cycles / 30) + 1;
-		log.debug("Projectile distance {} cycles {} server cycles {}", distance, cycles, serverCycles);
-		return serverCycles;
-	}
-
-	private boolean specialAttackHit(SpecialWeapon specialWeapon, Hitsplat hitsplat, NPC target) {
-		log.debug("Special attack hit {} hitsplat {}", specialWeapon, hitsplat.getAmount());
-
-		if (config.useCustomSpecSound()) {
-			// Arclight
-			if (arclightItemIds[0] == specialWeapon.getItemID()[0]) {
-				if (hitsplat.getAmount() == 0 && config.arclightMissBoolean()) {
-					log.debug("Arclight spec missed");
-					soundToPlay = loadCustomSound(HitSoundEnum.ARCLIGHT_MISS.getFile());
-					if (soundToPlay != null)
-						log.debug("Found custom Arclight miss sound");
-					else
-						soundToPlay = loadDefaultSound(DEFAULT_ARCLIGHT_MISS_FILE);
-					return true;
-				}
-				if (hitsplat.getAmount() != 0 && config.arclightHitBoolean()) {
-					log.debug("Arclight spec hit");
-					soundToPlay = loadCustomSound(HitSoundEnum.ARCLIGHT_HIT.getFile());
-					if (soundToPlay != null)
-						log.debug("Found custom Arclight hit sound");
-					else
-						soundToPlay = loadDefaultSound(DEFAULT_ARCLIGHT_HIT_FILE);
-					return true;
-				}
-			}
-			// DWH
-			if (dwhItemIds[0] == specialWeapon.getItemID()[0] || dwhItemIds[1] == specialWeapon.getItemID()[0]) {
-				if (hitsplat.getAmount() != 0 && config.dwhHitBoolean()) {
-					log.debug("DWH spec hit");
-					if (maxed) {
-						soundToPlay = loadCustomSound(HitSoundEnum.DWH_MAX.getFile());
-						if (soundToPlay != null)
-							log.debug("Found custom DWH max sound");
-						else
-							soundToPlay = loadDefaultSound(DEFAULT_DWH_MAX_FILE);
-						log.debug("Assigned sound to DWH max");
-						return true;
-					} else {
-						soundToPlay = loadCustomSound(HitSoundEnum.DWH_HIT.getFile());
-						if (soundToPlay != null)
-							log.debug("Found custom DWH hit sound");
-						else
-							soundToPlay = loadDefaultSound(DEFAULT_DWH_HIT_FILE);
-						log.debug("Assigned sound to DWH hit");
-						return true;
-					}
-				}
-				if (hitsplat.getAmount() == 0 && config.dwhMissBoolean()) {
-					log.debug("DWH spec missed");
-					soundToPlay = loadCustomSound(HitSoundEnum.DWH_MISS.getFile());
-					if (soundToPlay != null)
-						log.debug("Found custom DWH miss sound");
-					else
-						soundToPlay = loadCustomSound(HitSoundEnum.DWH_MISS.getFile());
-					return true;
-				}
-			}
-
-			if (bgsItemIds[0] == specialWeapon.getItemID()[0]) {
-				if (hitsplat.getAmount() != 0 && config.bgsHitBoolean()) {
-					log.debug("BGS spec hit");
-					if (maxed) {
-						soundToPlay = loadCustomSound(HitSoundEnum.BGS_MAX.getFile());
-						if (soundToPlay != null)
-							log.debug("Found custom bgs max sound");
-						else
-							soundToPlay = loadDefaultSound(DEFAULT_BGS_MAX_FILE);
-						log.debug("Assigned sound to BGS max");
-					} else {
-						soundToPlay = loadCustomSound(HitSoundEnum.BGS_HIT.getFile());
-						if (soundToPlay != null)
-							log.debug("Found custom bgs hit sound");
-						else
-							soundToPlay = loadDefaultSound(DEFAULT_BGS_HIT_FILE);
-
-						log.debug("Assigned sound to BGS hit");
-					}
-					return true;
-				}
-				if (hitsplat.getAmount() == 0 && config.bgsMissBoolean()) {
-					log.debug("BGS spec missed");
-					soundToPlay = loadCustomSound(HitSoundEnum.BGS_MISS.getFile());
-					if (soundToPlay != null)
-						log.debug("Found custom bgs max sound");
-					else
-						soundToPlay = loadDefaultSound(DEFAULT_BGS_MISS_FILE);
-					return true;
-				}
-
-			}
-
-			if (boneDaggerItemIds[0] == specialWeapon.getItemID()[0]
-					|| boneDaggerItemIds[1] == specialWeapon.getItemID()[0]
-					|| boneDaggerItemIds[2] == specialWeapon.getItemID()[0]
-					|| boneDaggerItemIds[3] == specialWeapon.getItemID()[0]) {
-				if (hitsplat.getAmount() != 0 && config.bDaggerHitBoolean()) {
-					log.debug("Bone dagger spec hit");
-					if (maxed) {
-						soundToPlay = loadCustomSound(HitSoundEnum.BONE_DAGGER_MAX.getFile());
-						if (soundToPlay != null)
-							log.debug("Found custom bone dagger max sound");
-						else
-							soundToPlay = loadDefaultSound(DEFAULT_BONE_DAGGER_MAX_FILE);
-					} else {
-						soundToPlay = loadCustomSound(HitSoundEnum.BONE_DAGGER_HIT.getFile());
-						if (soundToPlay != null)
-							log.debug("Found custom bone dagger hit sound");
-						else
-							soundToPlay = loadDefaultSound(DEFAULT_BONE_DAGGER_HIT_FILE);
-					}
-					return true;
-				}
-				if (hitsplat.getAmount() == 0 && config.bDaggerMissBoolean()) {
-					log.debug("Bone dagger spec missed");
-					soundToPlay = loadCustomSound(HitSoundEnum.BONE_DAGGER_MISS.getFile());
-					if (soundToPlay != null)
-						log.debug("Found custom bone dagger miss sound");
-					else
-						soundToPlay = loadDefaultSound(DEFAULT_BONE_DAGGER_MISS_FILE);
-					return true;
-				}
-			}
-		} else {
-			if (hitsplat.getAmount() != 0) {
-				soundToPlay = loadCustomSound(HitSoundEnum.SPEC_HIT.getFile());
-				if (soundToPlay != null)
-					log.debug("Found custom spec hit sound");
-				else
-					soundToPlay = loadDefaultSound(DEFAULT_SPEC_HIT_FILE);
-				return true;
-			}
-			if (hitsplat.getAmount() == 0) {
-				soundToPlay = loadCustomSound(HitSoundEnum.SPEC_MISS.getFile());
-				if (soundToPlay != null)
-					log.debug("Found custom spec hit sound");
-				else
-					soundToPlay = loadDefaultSound(DEFAULT_SPEC_MISS_FILE);
-				return true;
-			}
-		}
-		return false;
-	}
-	*/
 
 	@Provides
 	AttackSoundNotificationsConfig provideConfig(ConfigManager configManager) {

@@ -263,7 +263,7 @@ public class AttackSoundNotificationsPanel extends PluginPanel {
                                             returnSound = null;
                                     }
                                 } else {
-                                    returnSound = getDefaultSoundChoice(data.getSoundReplacing());
+                                    returnSound = otherGetDefaultSoundChoice(data.getSoundChoice());
                                 }
                                 return returnSound;
                             }
@@ -287,7 +287,7 @@ public class AttackSoundNotificationsPanel extends PluginPanel {
                                             returnSound = null;
                                     }
                                 } else {
-                                    returnSound = getDefaultSoundChoice(data.getSoundReplacing());
+                                    returnSound = otherGetDefaultSoundChoice(data.getSoundChoice());
                                 }
                                 return returnSound;
                             }
@@ -310,7 +310,7 @@ public class AttackSoundNotificationsPanel extends PluginPanel {
                                             returnSound = null;
                                     }
                                 } else {
-                                    returnSound = getDefaultSoundChoice(data.getSoundReplacing());
+                                    returnSound = otherGetDefaultSoundChoice(data.getSoundChoice());
                                 }
                                 return returnSound;
                             }
@@ -334,7 +334,7 @@ public class AttackSoundNotificationsPanel extends PluginPanel {
                                             returnSound = null;
                                     }
                                 } else {
-                                    returnSound = getDefaultSoundChoice(data.getSoundReplacing());
+                                    returnSound = otherGetDefaultSoundChoice(data.getSoundChoice());
                                 }
                                 return returnSound;
                             }
