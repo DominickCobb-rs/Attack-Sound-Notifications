@@ -1,3 +1,4 @@
+//.... something
 /*
  * Copyright (c) 2019, Ron Young <https://github.com/raiyni>
  * All rights reserved.
@@ -23,6 +24,33 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+// SpecialAttackCounter
+/*
+ * Copyright (c) 2018, Raqes <j.raqes@gmail.com>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice, this
+ *    list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+// Hit-Sounds
  /*
  * Copyright (c) 2016-2017, Adam <Adam@sigterm.info>
  * Copyright (c) 2022, Ferrariic <ferrariictweet@gmail.com>
@@ -72,11 +100,7 @@ import net.runelite.api.Hitsplat;
 import net.runelite.api.InventoryID;
 import net.runelite.api.Item;
 import net.runelite.api.ItemContainer;
-import net.runelite.api.ItemID;
-import net.runelite.api.Player;
 import net.runelite.api.VarPlayer;
-import net.runelite.api.coords.WorldArea;
-import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.VarbitChanged;
 import net.runelite.client.callback.ClientThread;
@@ -118,51 +142,15 @@ public class AttackSoundNotificationsPlugin extends Plugin {
 	private int specialPercentage;
 	private int specialWeapon;
 	private boolean specced=false;
+	// // Probably don't need hitsplatTick for our purposes, we're doing dummy work not calculations
 	// expected tick the hitsplat will happen on
-	private int hitsplatTick;
+	//private int hitsplatTick;
+
 	// most recent hitsplat and the target it was on
+	// This should only ever be the hitsplat the player applies to another creature
 	private Hitsplat lastSpecHitsplat;
 	//private NPC lastSpecTarget;
 	private InputStream soundToPlay;
-	private static final String BASE_DIRECTORY = System.getProperty("user.home") + "/.runelite/attacknotifications/";
-
-	// Custom Files //
-	public static final File MAX_HIT_FILE = new File(BASE_DIRECTORY, "max.wav");
-	public static final File MISS_FILE = new File(BASE_DIRECTORY, "miss.wav");
-	public static final File SPEC_MISS_FILE = new File(BASE_DIRECTORY, "spec_miss.wav");
-	public static final File SPEC_HIT_FILE = new File(BASE_DIRECTORY, "spec_hit.wav");
-	public static final File SPEC_MAX_FILE = new File(BASE_DIRECTORY, "spec_max.wav");
-	public static final File ARCLIGHT_MISS_FILE = new File(BASE_DIRECTORY, "arclight_spec_miss.wav");
-	public static final File ARCLIGHT_HIT_FILE = new File(BASE_DIRECTORY, "arclight_spec_hit.wav");
-	public static final File DWH_MISS_FILE = new File(BASE_DIRECTORY, "dwh_spec_miss.wav");
-	public static final File DWH_HIT_FILE = new File(BASE_DIRECTORY, "dwh_spec_hit.wav");
-	public static final File DWH_MAX_FILE = new File(BASE_DIRECTORY, "dwh_spec_max.wav");
-	public static final File BGS_MISS_FILE = new File(BASE_DIRECTORY, "bgs_spec_miss.wav");
-	public static final File BGS_HIT_FILE = new File(BASE_DIRECTORY, "bgs_spec_hit.wav");
-	public static final File BGS_MAX_FILE = new File(BASE_DIRECTORY, "bgs_spec_max.wav");
-	public static final File BONE_DAGGER_MISS_FILE = new File(BASE_DIRECTORY, "bone_dagger_spec_miss.wav");
-	public static final File BONE_DAGGER_HIT_FILE = new File(BASE_DIRECTORY, "bone_dagger_spec_hit.wav");
-	public static final File BONE_DAGGER_MAX_FILE = new File(BASE_DIRECTORY, "bone_dagger_spec_default.wav");
-	//////////////////
-
-	// Default Files //
-	public static final String DEFAULT_MAX_FILE = "/default_max.wav";
-	public static final String DEFAULT_MISS_FILE = "/default_miss.wav";
-	public static final String DEFAULT_SPEC_MISS_FILE = "/default_spec_miss.wav";
-	public static final String DEFAULT_SPEC_HIT_FILE = "/default_spec_hit.wav";
-	public static final String DEFAULT_SPEC_MAX_FILE = "/default_spec_max.wav";
-	public static final String DEFAULT_ARCLIGHT_MISS_FILE = "/default_arclight_spec_miss.wav";
-	public static final String DEFAULT_ARCLIGHT_HIT_FILE = "/default_arclight_spec_hit.wav";
-	public static final String DEFAULT_DWH_MISS_FILE = "/default_dwh_spec_miss.wav";
-	public static final String DEFAULT_DWH_HIT_FILE = "/default_dwh_spec_hit.wav";
-	public static final String DEFAULT_DWH_MAX_FILE = "/default_dwh_spec_max.wav";
-	public static final String DEFAULT_BGS_MISS_FILE = "/default_bgs_spec_miss.wav";
-	public static final String DEFAULT_BGS_HIT_FILE = "/default_bgs_spec_hit.wav";
-	public static final String DEFAULT_BGS_MAX_FILE = "/default_bgs_spec_max.wav";
-	public static final String DEFAULT_BONE_DAGGER_MISS_FILE = "/default_bone_dagger_spec_miss.wav";
-	public static final String DEFAULT_BONE_DAGGER_HIT_FILE = "/default_bone_dagger_spec_hit.wav";
-	public static final String DEFAULT_BONE_DAGGER_MAX_FILE = "/default_bone_dagger_spec_max.wav";
-	///////////////////
 
 	@Override
 	protected void startUp() throws Exception {
@@ -219,29 +207,41 @@ public class AttackSoundNotificationsPlugin extends Plugin {
 		}
 
 		this.specialPercentage = specialPercentage;
-
+		
+		
+		// We don't need most of this stuff, but we do need it
 		// This event runs prior to player and npc updating, making getInteracting() too
 		// early to call..
 		// defer this with invokeLater(), but note that this will run after incrementing
 		// the server tick counter
 		// so we capture the current server tick counter here for use in computing the
 		// final hitsplat tick
-		final int serverTicks = client.getTickCount();
+		//final int serverTicks = client.getTickCount();
 		clientThread.invokeLater(() -> {
-			usedSpecialWeapon();
+			ItemContainer equipment = client.getItemContainer(InventoryID.EQUIPMENT);
+			if (equipment != null) {
 
-			if (specialWeapon == -1) {
+				Item weapon = equipment.getItem(EquipmentInventorySlot.WEAPON.getSlotIdx());
+				if (weapon != null) {
+					specialWeapon = weapon.getId();
+				} else specialWeapon = -1;
+			} else specialWeapon = -1;
+			specced = true;
+			log.debug("Set specced to true");
+			//usedSpecialWeapon();
+
+			/*if (specialWeapon == -1) {
 				// unrecognized special attack weapon
 				return;
 			}
 
 			Actor target = client.getLocalPlayer().getInteracting();
-			//lastSpecTarget = target instanceof NPC ? (NPC) target : null;
+			lastSpecTarget = target instanceof NPC ? (NPC) target : null;
 			hitsplatTick = serverTicks + getHitDelay(specialWeapon, target);
-			specced = true;
-			log.debug("Set specced to true");
-			log.debug("Special attack used - percent: {} weapon: {} server cycle {} hitsplat cycle {}",
-					specialPercentage, specialWeapon, serverTicks, hitsplatTick);
+			*/
+			
+			/*log.debug("Special attack used - percent: {} weapon: {} server cycle {} hitsplat cycle {}",
+					specialPercentage, specialWeapon, serverTicks, hitsplatTick);*/
 		});
 	}
 
@@ -249,15 +249,17 @@ public class AttackSoundNotificationsPlugin extends Plugin {
 	public void onHitsplatApplied(HitsplatApplied hitsplatApplied) {
 		Actor target = hitsplatApplied.getActor();
 		Hitsplat hitsplat = hitsplatApplied.getHitsplat();
-		ItemContainer equipment = client.getItemContainer(InventoryID.EQUIPMENT);
-		if (equipment != null) {
-
-			Item weapon = equipment.getItem(EquipmentInventorySlot.WEAPON.getSlotIdx());
-			if (weapon != null) {
-				specialWeapon = weapon.getId();
-			} else specialWeapon = -1;
-		} else specialWeapon = -1;
 		if (hitsplat.isMine() && target != client.getLocalPlayer()) {
+			if(specialWeapon == -1){
+				ItemContainer equipment = client.getItemContainer(InventoryID.EQUIPMENT);
+				if (equipment != null) {
+
+					Item weapon = equipment.getItem(EquipmentInventorySlot.WEAPON.getSlotIdx());
+					if (weapon != null) {
+						specialWeapon = weapon.getId();
+					} else specialWeapon = -1;
+				} else specialWeapon = -1;
+			}
 			lastSpecHitsplat = hitsplat;
 		}
 	}
@@ -300,7 +302,9 @@ public class AttackSoundNotificationsPlugin extends Plugin {
 		}
 		return false;
 	}
-
+	
+	// We PROBABLY don't need this stuff
+	/*
 	private void usedSpecialWeapon() {
 		ItemContainer equipment = client.getItemContainer(InventoryID.EQUIPMENT);
 		if (equipment != null) {
@@ -311,7 +315,7 @@ public class AttackSoundNotificationsPlugin extends Plugin {
 			} else specialWeapon = -1;
 		} else specialWeapon = -1;
 	}
-
+	
 	private int getHitDelay(int specialWeapon, Actor target) {
 		// DORGESHUUN_CROSSBOW is the only ranged wep we support, so everything else is
 		// just melee and delay 1
@@ -343,7 +347,7 @@ public class AttackSoundNotificationsPlugin extends Plugin {
 		log.debug("Projectile distance {} cycles {} server cycles {}", distance, cycles, serverCycles);
 		return serverCycles;
 	}
-	/*
+
 	private boolean specialAttackHit(SpecialWeapon specialWeapon, Hitsplat hitsplat, NPC target) {
 		log.debug("Special attack hit {} hitsplat {}", specialWeapon, hitsplat.getAmount());
 

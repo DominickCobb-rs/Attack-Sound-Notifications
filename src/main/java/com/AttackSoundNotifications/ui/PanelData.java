@@ -1,41 +1,45 @@
 package com.AttackSoundNotifications.ui;
 
-import java.util.Enumeration;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.swing.*;
-
+import com.AttackSoundNotifications.ui.AttackSoundNotificationsPanel.Condition;
 import com.AttackSoundNotifications.ui.AttackSoundNotificationsPanel.SoundOption;
 
 public class PanelData {
     private final AtomicInteger weaponId;
-    private final JCheckBox enable;
+    private final JLabel enable;
     private final JTextField soundFilePath;
     private final JComboBox<SoundOption> soundChoice;
-    private final JComboBox<SoundOption> replacementChoice;
-    private final ButtonGroup buttonGroup;
+    private final JComboBox<Condition> replacementChoice;
+    private final JLabel name;
 
-    public PanelData(AtomicInteger weaponId, JCheckBox enable, JTextField soundFilePath, JComboBox<SoundOption> soundChoice, JComboBox<SoundOption> replacementChoice, ButtonGroup buttonGroup) {
+    public PanelData(AtomicInteger weaponId, JLabel enable, JTextField soundFilePath,
+            JComboBox<SoundOption> soundChoice, JComboBox<Condition> replacementChoice, JLabel name) {
         this.weaponId = weaponId;
         this.enable = enable;
         this.soundFilePath = soundFilePath;
         this.soundChoice = soundChoice;
         this.replacementChoice = replacementChoice;
-        this.buttonGroup = buttonGroup;
+        this.name = name;
     }
+
+    public String getName() {
+        return (String) name.getText();
+    }
+
     public boolean active() {
-        return enable.isSelected();
+        if (enable.getIcon() == NewEntryPanel.AUDIBLE_ICON || enable.getIcon() == NewEntryPanel.AUDIBLE_HOVER_ICON)
+            return true;
+        else
+            return false;
     }
 
     public int getWeaponId() {
         return weaponId.get();
     }
 
-    public boolean isCustomSound() {
-        return enable.isSelected();
-    }
-    // Miss 0, Max 1, Spec miss 2, Spec hit 3, spec max 4
-    public SoundOption getSoundReplacing() {
-        return (SoundOption) replacementChoice.getSelectedItem();
+    public Condition getSoundReplacing() {
+        return (Condition) replacementChoice.getSelectedItem();
     }
 
     public String getSoundFilePath() {
@@ -44,15 +48,5 @@ public class PanelData {
 
     public SoundOption getSoundChoice() {
         return (SoundOption) soundChoice.getSelectedItem();
-    }
-    public String getButtonGroupSetting() {
-        Enumeration<AbstractButton> buttons = buttonGroup.getElements();
-        while(buttons.hasMoreElements()) {
-            AbstractButton button = buttons.nextElement();
-            if (button.isSelected()){
-                return button.getText();
-            }
-        }
-        return "None";
     }
 }
