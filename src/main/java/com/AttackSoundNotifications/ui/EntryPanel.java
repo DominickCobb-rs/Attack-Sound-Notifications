@@ -106,7 +106,6 @@ public class EntryPanel extends JPanel {
     private JTextField customSoundTextField = new JTextField();
     private JLabel selectFile = new JLabel();
     private JButton testSound = new JButton("Play the sound");
-    private PanelData panelData;
     private JComboBox<Condition> replacing = new JComboBox<>(new DefaultComboBoxModel<>(Condition.values()));
     private JComboBox<SoundOption> playing = new JComboBox<>(new DefaultComboBoxModel<>(SoundOption.values()));
     private ImageIcon weaponIcon = new ImageIcon(
@@ -358,7 +357,7 @@ public class EntryPanel extends JPanel {
         textEntry.setBorder(new EmptyBorder(5, 8, 5, 8));
         textEntry.setBackground(ColorScheme.DARKER_GRAY_COLOR);
         buttons.add(textEntry, BorderLayout.NORTH);
-        buttons.add(testSound, BorderLayout.SOUTH);
+        buttons.add(testSound, BorderLayout.CENTER);
         buttons.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
         JPanel bottomContainer = new JPanel(new BorderLayout());
@@ -456,10 +455,9 @@ public class EntryPanel extends JPanel {
                         return; // If user doesn't confirm, we do nothing more
                     }
                 }
-                removeSelf();
+                EntryPanel.this.removeSelf();
                 entryPanel.remove(mainPanel);
                 parent.reloadPanels();
-                parent.save();
             }
 
             @Override
@@ -472,10 +470,6 @@ public class EntryPanel extends JPanel {
                 removeEntry.setIcon(REMOVE_ICON);
             }
         });
-
-        panelData = new PanelData(weaponId, audible, customSoundTextField, playing, replacing, name);
-        mainPanel.setName(Integer.toString(panelData.hashCode())); // Set name to the hashCode of weaponEntry for
-                                                                   // identification
 
         replacing.addActionListener(new ActionListener() {
             @Override
@@ -556,10 +550,11 @@ public class EntryPanel extends JPanel {
         testSound.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (panelData.getSoundOption() == SoundOption.CUSTOM_SOUND)
-                    parent.findCustomSound(panelData.getSoundFilePath());
-                else
-                    parent.playDefaultSound(panelData.getSoundOption());
+                if (getPlaying() == SoundOption.CUSTOM_SOUND)
+                    parent.findCustomSound(getCustomSoundPath());
+                else{
+                    parent.playDefaultSound(parent.getDefaultSoundChoice(getReplacing()));
+                }
             }
         });
 
@@ -596,17 +591,39 @@ public class EntryPanel extends JPanel {
     public JPanel getMainPanel() {
         return mainPanel;
     }
-
-    public PanelData getPanelData() {
-        return panelData;
-    }
     
+    public void removeSelf() {
+            parent.removeEntryPanel(this);
+    }
+
+    public int getWeaponId(){
+        return weaponId;
+    }
+
+    public boolean getAudible(){
+        if(audible.getIcon()==AUDIBLE_ICON || audible.getIcon() == AUDIBLE_HOVER_ICON)
+                return true;
+            else
+                return false;
+    }
+
+    public Condition getReplacing() {
+        return (Condition) replacing.getSelectedItem();
+    }
+
+    public SoundOption getPlaying() {
+        return (SoundOption) playing.getSelectedItem();
+    }
+
+
+
+
     // For storing panel state
-        public String getWeaponId() {
+        public String getWeaponIdString() {
             return Integer.toString(this.weaponId);
         }
 
-        public String getAudible() {
+        public String getAudibleString() {
             if(audible.getIcon()==AUDIBLE_ICON || audible.getIcon() == AUDIBLE_HOVER_ICON)
                 return "true";
             else
@@ -617,19 +634,15 @@ public class EntryPanel extends JPanel {
             return customSoundTextField.getText();
         }
 
-        public String getReplacing() {
+        public String getReplacingString() {
             return replacing.getSelectedItem().toString();
         }
 
-        public String getPlaying() {
+        public String getPlayingString() {
             return playing.getSelectedItem().toString();
         }
+        ///////////////////////////
 
-        public void removeSelf() {
-            parent.removeEntryPanel(this);
-        }
-    ///////////////////////////
-    
     // For retrieving panel state from file //
         public void setPanelName(String name){
             setName(name);

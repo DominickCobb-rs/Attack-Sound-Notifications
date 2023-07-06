@@ -103,6 +103,7 @@ public class AttackSoundNotificationsPanel extends PluginPanel {
     private final SpriteManager spriteManager;
     private final ItemManager itemManager;
     private final Gson gson;
+    private Boolean startup = false;
 
     static {
         final BufferedImage addIcon = ImageUtil.loadImageResource(AttackSoundNotificationsPlugin.class,
@@ -213,6 +214,7 @@ public class AttackSoundNotificationsPanel extends PluginPanel {
             @Override
             public void mousePressed(MouseEvent mouseEvent) {
                 addNewEntry(searchProvider, chatboxPanelManager, spriteManager, itemManager, entryPanel);
+                save();
             }
 
             @Override
@@ -247,26 +249,23 @@ public class AttackSoundNotificationsPanel extends PluginPanel {
         entryPanelList.add(newEntryPanel);
         entryPanel.add(newEntryPanel.getMainPanel(), entryConstraints);
         reloadPanels();
-        save();
     }
 
     private void loadEntryPanels(JPanel parentPanel) {
+        startup = true;
         List<EntryPanelState> panelStates = gson.fromJson(configManager.getConfiguration(CONFIG_GROUP, PANEL_PREFIX),
                 new TypeToken<List<EntryPanelState>>() {
                 }.getType());
-        if (panelStates != null || gson.fromJson(configManager.getConfiguration(CONFIG_GROUP, PANEL_PREFIX),
-                new TypeToken<List<EntryPanelState>>() {
-                }.getType()) != "[]") {
-            log.debug("Found panels");
+        if (panelStates != null) {
             for (EntryPanelState panelState : panelStates) {
                 System.out.println(panelState);
                 // Create a new panel
                 // Load the state of the panel from the saved state
                 if (panelState.getPanelName() != null) {
+                    log.debug("Found panel "+panelState.getPanelName());
                     EntryPanel panel = new EntryPanel(AttackSoundNotificationsPanel.this, searchProvider, chatboxPanelManager, spriteManager,
                             itemManager,
                             configManager, parentPanel);
-                    if (panelState.getPanelName() != null)
                         panel.setPanelName(panelState.getPanelName());
                     if (panelState.getWeaponId() != null)
                         panel.setWeaponId(panelState.getWeaponId());
@@ -295,18 +294,21 @@ public class AttackSoundNotificationsPanel extends PluginPanel {
                 }
                 
             }
-            save();
+            startup = false;
         } else
             log.debug("Found no panels");
     }
 
     public void save() {
-        log.debug("Saving");
+        if (!startup){
+            log.debug("Saving");
         List<EntryPanelState> panelStates = entryPanelList.stream()
                 .map(EntryPanelState::new)
                 .collect(Collectors.toList());
-        configManager.setConfiguration(CONFIG_GROUP, PANEL_PREFIX, gson.toJson(panelStates));
-        log.debug("Wrote " + gson.toJson(panelStates) + "to " + CONFIG_GROUP + " " + PANEL_PREFIX);
+            configManager.setConfiguration(CONFIG_GROUP, PANEL_PREFIX, gson.toJson(panelStates));
+            log.debug("Wrote " + gson.toJson(panelStates) + "to " + CONFIG_GROUP + " " + PANEL_PREFIX);
+        }
+        
     }
 
     public void removeEntryPanel(EntryPanel panel) {
@@ -316,31 +318,38 @@ public class AttackSoundNotificationsPanel extends PluginPanel {
 
     // Sounds! //
     public InputStream fetchSound(Integer hitType, Integer weaponId, Boolean usedSpecialAttack) {
+        log.debug("Total panels: "+entryPanelList.size());
         for (EntryPanel panel : entryPanelList) {
-            PanelData data = panel.getPanelData();
             // If it's the weaponID
-            if ((weaponId == data.getWeaponId() && data.active()) || data.getWeaponId() == -1) {
+            if ((weaponId == panel.getWeaponId() && panel.getAudible()) || panel.getWeaponId() == -1) {
                 log.debug("Found weapon in panels");
+                log.debug("Skipping panel...");
+                log.debug("name         :"+panel.getName());
+                log.debug("weaponId     :"+panel.getWeaponId());
+                log.debug("audible      :"+panel.getAudible());
+                log.debug("soundPath    :"+panel.getCustomSoundPath());
+                log.debug("playing      :"+panel.getPlaying());
+                log.debug("replacing    :"+panel.getReplacing());
                 // Only special attacks
-                switch (data.getSoundReplacing()) {
+                switch (panel.getReplacing()) {
                     // Spec Missed
                     case MISS: {
                         if (!usedSpecialAttack) {
                             if (hitType == HitsplatID.BLOCK_ME) {
-                                if (data.getSoundOption() == SoundOption.CUSTOM_SOUND) {
-                                    returnSound = loadCustomSound(data.getSoundFilePath());
+                                if (panel.getPlaying() == SoundOption.CUSTOM_SOUND) {
+                                    returnSound = loadCustomSound(panel.getCustomSoundPath());
                                     if (returnSound != null)
                                         log.debug("Found custom sound");
                                     else {
                                         client.addChatMessage(ChatMessageType.GAMEMESSAGE, "",
-                                                "Couldn't find custom sound file:" + data.getSoundFilePath(), null);
+                                                "Couldn't find custom sound file:" + panel.getCustomSoundPath(), null);
                                         if (config.cantFind())
                                             returnSound = loadDefaultSound(DEFAULT_MISS_FILE);
                                         else
                                             returnSound = null;
                                     }
                                 } else {
-                                    returnSound = otherGetDefaultSoundChoice(data.getSoundOption());
+                                    returnSound = otherGetDefaultSoundChoice(panel.getPlaying());
                                 }
                                 return returnSound;
                             }
@@ -351,20 +360,20 @@ public class AttackSoundNotificationsPanel extends PluginPanel {
                         if (!usedSpecialAttack) {
                             log.debug("Max is being replaced");
                             if (hitType == HitsplatID.DAMAGE_MAX_ME) {
-                                if (data.getSoundOption() == SoundOption.CUSTOM_SOUND) {
-                                    returnSound = loadCustomSound(data.getSoundFilePath());
+                                if (panel.getPlaying() == SoundOption.CUSTOM_SOUND) {
+                                    returnSound = loadCustomSound(panel.getCustomSoundPath());
                                     if (returnSound != null)
                                         log.debug("Found custom sound");
                                     else {
                                         client.addChatMessage(ChatMessageType.GAMEMESSAGE, "",
-                                                "Couldn't find custom sound file:" + data.getSoundFilePath(), null);
+                                                "Couldn't find custom sound file:" + panel.getCustomSoundPath(), null);
                                         if (config.cantFind())
                                             returnSound = loadDefaultSound(DEFAULT_SPEC_MAX_FILE);
                                         else
                                             returnSound = null;
                                     }
                                 } else {
-                                    returnSound = otherGetDefaultSoundChoice(data.getSoundOption());
+                                    returnSound = otherGetDefaultSoundChoice(panel.getPlaying());
                                 }
                                 return returnSound;
                             }
@@ -374,20 +383,20 @@ public class AttackSoundNotificationsPanel extends PluginPanel {
                     case SPECIAL_MISS: {
                         if (usedSpecialAttack) {
                             if (hitType == HitsplatID.BLOCK_ME) {
-                                if (data.getSoundOption() == SoundOption.CUSTOM_SOUND) {
-                                    returnSound = loadCustomSound(data.getSoundFilePath());
+                                if (panel.getPlaying() == SoundOption.CUSTOM_SOUND) {
+                                    returnSound = loadCustomSound(panel.getCustomSoundPath());
                                     if (returnSound != null)
                                         log.debug("Found custom sound");
                                     else {
                                         client.addChatMessage(ChatMessageType.GAMEMESSAGE, "",
-                                                "Couldn't find custom sound file:" + data.getSoundFilePath(), null);
+                                                "Couldn't find custom sound file:" + panel.getCustomSoundPath(), null);
                                         if (config.cantFind())
                                             returnSound = loadDefaultSound(DEFAULT_SPEC_MISS_FILE);
                                         else
                                             returnSound = null;
                                     }
                                 } else {
-                                    returnSound = otherGetDefaultSoundChoice(data.getSoundOption());
+                                    returnSound = otherGetDefaultSoundChoice(panel.getPlaying());
                                 }
                                 return returnSound;
                             }
@@ -398,20 +407,20 @@ public class AttackSoundNotificationsPanel extends PluginPanel {
                     case SPECIAL_HIT: {
                         if (usedSpecialAttack) {
                             if (hitType == HitsplatID.DAMAGE_ME) {
-                                if (data.getSoundOption() == SoundOption.CUSTOM_SOUND) {
-                                    returnSound = loadCustomSound(data.getSoundFilePath());
+                                if (panel.getPlaying() == SoundOption.CUSTOM_SOUND) {
+                                    returnSound = loadCustomSound(panel.getCustomSoundPath());
                                     if (returnSound != null)
                                         log.debug("Found custom sound");
                                     else {
                                         client.addChatMessage(ChatMessageType.GAMEMESSAGE, "",
-                                                "Couldn't find custom sound file:" + data.getSoundFilePath(), null);
+                                                "Couldn't find custom sound file:" + panel.getCustomSoundPath(), null);
                                         if (config.cantFind())
                                             returnSound = loadDefaultSound(DEFAULT_SPEC_HIT_FILE);
                                         else
                                             returnSound = null;
                                     }
                                 } else {
-                                    returnSound = otherGetDefaultSoundChoice(data.getSoundOption());
+                                    returnSound = otherGetDefaultSoundChoice(panel.getPlaying());
                                 }
                                 return returnSound;
                             }
@@ -422,26 +431,55 @@ public class AttackSoundNotificationsPanel extends PluginPanel {
                     case SPECIAL_MAX: {
                         if (usedSpecialAttack) {
                             if (hitType == HitsplatID.DAMAGE_MAX_ME) {
-                                if (data.getSoundOption() == SoundOption.CUSTOM_SOUND) {
-                                    returnSound = loadCustomSound(data.getSoundFilePath());
+                                if (panel.getPlaying() == SoundOption.CUSTOM_SOUND) {
+                                    returnSound = loadCustomSound(panel.getCustomSoundPath());
                                     if (returnSound != null)
                                         log.debug("Found custom sound");
                                     else {
                                         client.addChatMessage(ChatMessageType.GAMEMESSAGE, "",
-                                                "Couldn't find custom sound file:" + data.getSoundFilePath(), null);
+                                                "Couldn't find custom sound file:" + panel.getCustomSoundPath(), null);
                                         if (config.cantFind())
                                             returnSound = loadDefaultSound(DEFAULT_SPEC_MAX_FILE);
                                         else
                                             returnSound = null;
                                     }
                                 } else {
-                                    returnSound = otherGetDefaultSoundChoice(data.getSoundOption());
+                                    returnSound = otherGetDefaultSoundChoice(panel.getPlaying());
                                 }
                                 return returnSound;
                             }
                         }
                     }
                 }
+            } else {
+                log.debug("Skipping panel...");
+                log.debug("name         :"+panel.getName());
+                log.debug("weaponId     :"+panel.getWeaponId());
+                log.debug("audible      :"+panel.getAudible());
+                log.debug("soundPath    :"+panel.getCustomSoundPath());
+                log.debug("playing      :"+panel.getPlaying());
+                log.debug("replacing    :"+panel.getReplacing());
+            }
+        }
+        return null;
+    }
+
+    public InputStream getDefaultSoundChoice(Condition choice) {
+        switch (choice) {
+            case SPECIAL_HIT: {
+                return loadDefaultSound(DEFAULT_SPEC_HIT_FILE);
+            }
+            case SPECIAL_MAX: {
+                return loadDefaultSound(DEFAULT_SPEC_MAX_FILE);
+            }
+            case SPECIAL_MISS: {
+                return loadDefaultSound(DEFAULT_SPEC_MISS_FILE);
+            }
+            case MISS: {
+                return loadDefaultSound(DEFAULT_MISS_FILE);
+            }
+            case MAX: {
+                return loadDefaultSound(DEFAULT_MAX_FILE);
             }
         }
         return null;
@@ -489,8 +527,7 @@ public class AttackSoundNotificationsPanel extends PluginPanel {
         }
     }
 
-    public void playDefaultSound(SoundOption sound) {
-        InputStream soundStream = otherGetDefaultSoundChoice(sound);
-        plugin.playCustomSound(soundStream);
+    public void playDefaultSound(InputStream sound) {
+        plugin.playCustomSound(sound);
     }
 }

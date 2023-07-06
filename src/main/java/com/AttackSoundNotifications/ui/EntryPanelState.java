@@ -10,11 +10,11 @@ public class EntryPanelState {
 
     public EntryPanelState(EntryPanel panel) {
         this.panelName=panel.getName();
-        this.weaponId=panel.getWeaponId();
-        this.audible_status=panel.getAudible();
+        this.weaponId=panel.getWeaponIdString();
+        this.audible_status=panel.getAudibleString();
         this.customSoundTextField_contents=panel.getCustomSoundPath();
-        this.replacing_value=panel.getReplacing();
-        this.playing_value=panel.getPlaying();
+        this.replacing_value=panel.getReplacingString();
+        this.playing_value=panel.getPlayingString();
     }
 
     public String getPanelName() {
