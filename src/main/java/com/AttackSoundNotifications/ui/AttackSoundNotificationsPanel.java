@@ -8,10 +8,10 @@
  * modification, are permitted provided that the following conditions are met:
  *
  * 1. Redistributions of source code must retain the above copyright notice, this
- *    list of conditions and the following disclaimer.
+ * list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright notice,
- *    this list of conditions and the following disclaimer in the documentation
- *    and/or other materials provided with the distribution.
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -27,24 +27,14 @@
 
 package com.AttackSoundNotifications.ui;
 
-import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-
-import com.AttackSoundNotifications.AttackSoundNotificationsConfig;
 import com.AttackSoundNotifications.AttackSoundNotificationsPlugin;
 import static com.AttackSoundNotifications.AttackSoundNotificationsPlugin.CONFIG_GROUP;
 import static com.AttackSoundNotifications.AttackSoundNotificationsPlugin.PANEL_PREFIX;
 import net.runelite.api.ChatMessageType;
-import net.runelite.api.Client;
 import net.runelite.api.HitsplatID;
-import net.runelite.client.config.ConfigManager;
-import net.runelite.client.game.ItemManager;
-import net.runelite.client.game.SpriteManager;
-import net.runelite.client.game.chatbox.ChatboxItemSearch;
-import net.runelite.client.game.chatbox.ChatboxPanelManager;
 import net.runelite.client.ui.PluginPanel;
 import net.runelite.client.util.ImageUtil;
-
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.inject.Inject;
@@ -58,455 +48,535 @@ import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class AttackSoundNotificationsPanel extends PluginPanel {
-    private InputStream returnSound;
-    private List<EntryPanel> entryPanelList = new ArrayList<>();
+public class AttackSoundNotificationsPanel extends PluginPanel
+{
+	private InputStream returnSound;
+	private List<EntryPanel> entryPanelList = new ArrayList<>();
 
-    // Default Sound Files //
-    public static final String DEFAULT_MAX_FILE = "/audio/default_max.wav";
-    public static final String DEFAULT_MISS_FILE = "/audio/default_miss.wav";
-    public static final String DEFAULT_SPEC_MISS_FILE = "/audio/default_spec_miss.wav";
-    public static final String DEFAULT_SPEC_HIT_FILE = "/audio/default_spec_hit.wav";
-    public static final String DEFAULT_SPEC_MAX_FILE = "/audio/default_spec_max.wav";
-    ////////////////////////
+	// Default Sound Files //
+	public static final String DEFAULT_MAX_FILE = "/audio/default_max.wav";
+	public static final String DEFAULT_MISS_FILE = "/audio/default_miss.wav";
+	public static final String DEFAULT_SPEC_MISS_FILE = "/audio/default_spec_miss.wav";
+	public static final String DEFAULT_SPEC_HIT_FILE = "/audio/default_spec_hit.wav";
+	public static final String DEFAULT_SPEC_MAX_FILE = "/audio/default_spec_max.wav";
+	public static final String FILE_NOT_FOUND = "/audio/file_not_found.wav";
+	////////////////////////
 
-    // Panel Construction //
-    private static final ImageIcon ADD_ICON;
-    private static final ImageIcon ADD_HOVER_ICON;
-    private final JLabel addSound = new JLabel(ADD_ICON);
-    private final JLabel title = new JLabel();
+	// Panel Construction //
+	private static final ImageIcon ADD_ICON;
+	private static final ImageIcon ADD_HOVER_ICON;
+	private final JLabel addSound = new JLabel(ADD_ICON);
+	private final JLabel title = new JLabel();
+	public final JPanel entryPanel = new JPanel(new GridBagLayout());
 
-    // Colors
-    private static final Color DEFAULT_BORDER_COLOR = Color.GREEN;
-    private static final Color DEFAULT_FILL_COLOR = new Color(0, 255, 0, 0);
-    private static final int DEFAULT_BORDER_THICKNESS = 3;
+	static
+	{
+		final BufferedImage addIcon = ImageUtil.loadImageResource(AttackSoundNotificationsPlugin.class, "/icons/add_icon.png");
+		ADD_ICON = new ImageIcon(addIcon);
+		ADD_HOVER_ICON = new ImageIcon(ImageUtil.alphaOffset(addIcon, 0.53f));
+	}
+	////////////////////////
 
-    // Getters
-    @Getter
-    private Color selectedColor = DEFAULT_BORDER_COLOR;
-    @Getter
-    private Color selectedFillColor = DEFAULT_FILL_COLOR;
-    @Getter
-    private int selectedBorderThickness = DEFAULT_BORDER_THICKNESS;
-    ////////////////////////
-    private final AttackSoundNotificationsPlugin plugin;
-    private final AttackSoundNotificationsConfig config;
-    private final Client client;
-    private final ConfigManager configManager;
-    private final ChatboxItemSearch searchProvider;
-    private final ChatboxPanelManager chatboxPanelManager;
-    private final SpriteManager spriteManager;
-    private final ItemManager itemManager;
-    private final Gson gson;
-    private Boolean startup = false;
+	private final AttackSoundNotificationsPlugin plugin;
+	private Boolean startup = false;
 
-    static {
-        final BufferedImage addIcon = ImageUtil.loadImageResource(AttackSoundNotificationsPlugin.class,
-                "/icons/add_icon.png");
-        ADD_ICON = new ImageIcon(addIcon);
-        ADD_HOVER_ICON = new ImageIcon(ImageUtil.alphaOffset(addIcon, 0.53f));
-    }
+	public enum SoundOption
+	{
+		SPECIAL_HIT("Default Special Hit Sound"), SPECIAL_MISS("Default Special Miss Sound"), SPECIAL_MAX("Default Special Max Sound"), MAX("Default Max Sound"), MISS("Default Miss Sound"), CUSTOM_SOUND("Custom sound"),
+		;
 
-    public enum SoundOption {
-        SPECIAL_HIT("Default Special Hit Sound"),
-        SPECIAL_MISS("Default Special Miss Sound"),
-        SPECIAL_MAX("Default Special Max Sound"),
-        MAX("Default Max Sound"),
-        MISS("Default Miss Sound"),
-        CUSTOM_SOUND("Custom sound"),;
+		private String displayValue;
 
-        private String displayValue;
+		SoundOption(String displayValue)
+		{
+			this.displayValue = displayValue;
+		}
 
-        SoundOption(String displayValue) {
-            this.displayValue = displayValue;
-        }
+		public String getDisplayValue()
+		{
+			return displayValue;
+		}
 
-        public String getDisplayValue() {
-            return displayValue;
-        }
+		// This method can be used to get the enum from the string representation
+		public static SoundOption fromString(String displayValue)
+		{
+			for (SoundOption option : SoundOption.values())
+			{
+				if (option.displayValue.equalsIgnoreCase(displayValue))
+				{
+					return option;
+				}
+			}
+			return null;
+		}
 
-        // This method can be used to get the enum from the string representation
-        public static SoundOption fromString(String displayValue) {
-            for (SoundOption option : SoundOption.values()) {
-                if (option.displayValue.equalsIgnoreCase(displayValue)) {
-                    return option;
-                }
-            }
-            return null;
-        }
+		@Override
+		public String toString()
+		{
+			return this.displayValue;
+		}
+	}
 
-        @Override
-        public String toString() {
-            return this.displayValue;
-        }
-    }
+	public enum Condition
+	{
+		SPECIAL_HIT("Special Attack Hit"), SPECIAL_MISS("Special Attack Miss"), SPECIAL_MAX("Special Attack Max"), MAX("Non-Special Max"), MISS("Non-Special Miss");
 
-    public enum Condition {
-        SPECIAL_HIT("Special Attack Hit"),
-        SPECIAL_MISS("Special Attack Miss"),
-        SPECIAL_MAX("Special Attack Max"),
-        MAX("Non-Special Max"),
-        MISS("Non-Special Miss");
+		private String displayValue;
 
-        private String displayValue;
+		Condition(String displayValue)
+		{
+			this.displayValue = displayValue;
+		}
 
-        Condition(String displayValue) {
-            this.displayValue = displayValue;
-        }
+		public String getDisplayValue()
+		{
+			return displayValue;
+		}
 
-        public String getDisplayValue() {
-            return displayValue;
-        }
+		// This method can be used to get the enum from the string representation
+		public static Condition fromString(String displayValue)
+		{
+			for (Condition option : Condition.values())
+			{
+				if (option.displayValue.equalsIgnoreCase(displayValue))
+				{
+					return option;
+				}
+			}
+			return null;
+		}
 
-        // This method can be used to get the enum from the string representation
-        public static Condition fromString(String displayValue) {
-            for (Condition option : Condition.values()) {
-                if (option.displayValue.equalsIgnoreCase(displayValue)) {
-                    return option;
-                }
-            }
-            return null;
-        }
+		@Override
+		public String toString()
+		{
+			return this.displayValue;
+		}
+	}
 
-        @Override
-        public String toString() {
-            return this.displayValue;
-        }
-    }
+	// Panels >:(
+	@Inject
+	public AttackSoundNotificationsPanel(AttackSoundNotificationsPlugin plugin)
+	{
+		this.plugin = plugin;
+		setLayout(new BorderLayout());
+		JPanel northPanel = new JPanel(new BorderLayout());
+		northPanel.setBorder(new EmptyBorder(11, 10, 10, 10));
 
-    // Panels >:(
-    @Inject
-    public AttackSoundNotificationsPanel(AttackSoundNotificationsPlugin plugin, ChatboxPanelManager chatboxPanelManager,
-            ChatboxItemSearch searchProvider,
-            SpriteManager spriteManager, ItemManager itemManager, Client client,
-            AttackSoundNotificationsConfig config, ConfigManager configManager, Gson gson) {
-        this.plugin = plugin;
-        this.config = config;
-        this.chatboxPanelManager = chatboxPanelManager;
-        this.searchProvider = searchProvider;
-        this.itemManager = itemManager;
-        this.spriteManager = spriteManager;
-        this.client = client;
-        this.configManager = configManager;
-        this.gson = gson;
-        setLayout(new BorderLayout());
-        JPanel entryPanel = new JPanel(new GridBagLayout());
-        JPanel northPanel = new JPanel(new BorderLayout());
-        northPanel.setBorder(new EmptyBorder(11, 10, 10, 10));
+		title.setText("Attack Sound Notifications");
+		title.setForeground(Color.WHITE);
 
-        title.setText("Attack Sound Notifications");
-        title.setForeground(Color.WHITE);
+		northPanel.add(title, BorderLayout.WEST);
+		northPanel.add(addSound, BorderLayout.EAST);
 
-        northPanel.add(title, BorderLayout.WEST);
-        northPanel.add(addSound, BorderLayout.EAST);
+		add(northPanel, BorderLayout.NORTH);
+		add(entryPanel, BorderLayout.CENTER);
 
-        add(northPanel, BorderLayout.NORTH);
-        add(entryPanel, BorderLayout.CENTER);
+		addSound.setToolTipText("Add new sound");
+		addSound.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		addSound.addMouseListener(new MouseAdapter()
+		{
+			@Override
+			public void mousePressed(MouseEvent mouseEvent)
+			{
+				addNewEntry();
+				save();
+			}
 
-        addSound.setToolTipText("Add new sound");
-        addSound.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        addSound.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mousePressed(MouseEvent mouseEvent) {
-                addNewEntry(searchProvider, chatboxPanelManager, spriteManager, itemManager, entryPanel);
-                save();
-            }
+			@Override
+			public void mouseEntered(MouseEvent mouseEvent)
+			{
+				addSound.setIcon(ADD_HOVER_ICON);
+			}
 
-            @Override
-            public void mouseEntered(MouseEvent mouseEvent) {
-                addSound.setIcon(ADD_HOVER_ICON);
-            }
+			@Override
+			public void mouseExited(MouseEvent mouseEvent)
+			{
+				addSound.setIcon(ADD_ICON);
+			}
+		});
+		loadEntryPanels(entryPanel);
+	}
 
-            @Override
-            public void mouseExited(MouseEvent mouseEvent) {
-                addSound.setIcon(ADD_ICON);
-            }
-        });
-        loadEntryPanels(entryPanel);
-    }
+	public void reloadPanels()
+	{
+		this.revalidate();
+		this.repaint();
+	}
 
-    public void reloadPanels() {
-        this.revalidate();
-        this.repaint();
-    }
+	private void addNewEntry()
+	{
+		GridBagConstraints entryConstraints = new GridBagConstraints();
+		entryConstraints.gridx = 0;
+		entryConstraints.gridy = entryPanel.getComponentCount() + 1;
+		entryConstraints.weightx = 1;
+		entryConstraints.fill = GridBagConstraints.NONE;
+		entryConstraints.anchor = GridBagConstraints.NORTH;
 
-    private void addNewEntry(ChatboxItemSearch searchProvider,
-            ChatboxPanelManager chatboxPanelManager, SpriteManager spriteManager, ItemManager itemManager,
-            JPanel entryPanel) {
-        GridBagConstraints entryConstraints = new GridBagConstraints();
-        entryConstraints.gridx = 0;
-        entryConstraints.gridy = entryPanel.getComponentCount() + 1;
-        entryConstraints.weightx = 1;
-        entryConstraints.fill = GridBagConstraints.NONE;
-        entryConstraints.anchor = GridBagConstraints.NORTH;
-        EntryPanel newEntryPanel = new EntryPanel(this, searchProvider, chatboxPanelManager,
-                spriteManager, itemManager, configManager, entryPanel);
-        entryPanelList.add(newEntryPanel);
-        entryPanel.add(newEntryPanel.getMainPanel(), entryConstraints);
-        reloadPanels();
-    }
+		EntryPanel newEntryPanel = new EntryPanel(this, plugin);
 
-    private void loadEntryPanels(JPanel parentPanel) {
-        startup = true;
-        List<EntryPanelState> panelStates = gson.fromJson(configManager.getConfiguration(CONFIG_GROUP, PANEL_PREFIX),
-                new TypeToken<List<EntryPanelState>>() {
-                }.getType());
-        if (panelStates != null) {
-            for (EntryPanelState panelState : panelStates) {
-                System.out.println(panelState);
-                // Create a new panel
-                // Load the state of the panel from the saved state
-                if (panelState.getPanelName() != null) {
-                    log.debug("Found panel "+panelState.getPanelName());
-                    EntryPanel panel = new EntryPanel(AttackSoundNotificationsPanel.this, searchProvider, chatboxPanelManager, spriteManager,
-                            itemManager,
-                            configManager, parentPanel);
-                        panel.setPanelName(panelState.getPanelName());
-                    if (panelState.getWeaponId() != null)
-                        panel.setWeaponId(panelState.getWeaponId());
-                    if (panelState.getAudible() != null)
-                        panel.setAudible(panelState.getAudible());
-                    if (panelState.getReplacing() != null) {
-                        Condition replacing = Condition.fromString(panelState.getReplacing());
-                        panel.setReplacing(replacing);
-                    }
-                    if (panelState.getPlaying() != null) {
-                        SoundOption playing = SoundOption.fromString(panelState.getPlaying());
-                        panel.setPlaying(playing);
-                        if (playing == SoundOption.CUSTOM_SOUND){
-                            panel.makeSoundInputVisible();
-                            panel.setCustomSoundPath(panelState.getCustomSoundPath());
-                        }
-                    }
-                    entryPanelList.add(panel);
-                    GridBagConstraints entryConstraints = new GridBagConstraints();
-                    entryConstraints.gridx = 0;
-                    entryConstraints.gridy = parentPanel.getComponentCount() + 1;
-                    entryConstraints.weightx = 1;
-                    entryConstraints.fill = GridBagConstraints.NONE;
-                    entryConstraints.anchor = GridBagConstraints.NORTH;
-                    parentPanel.add(panel.getMainPanel(), entryConstraints);
-                }
-                
-            }
-            startup = false;
-        } else
-            log.debug("Found no panels");
-    }
+		entryPanelList.add(newEntryPanel);
 
-    public void save() {
-        if (!startup){
-            log.debug("Saving");
-        List<EntryPanelState> panelStates = entryPanelList.stream()
-                .map(EntryPanelState::new)
-                .collect(Collectors.toList());
-            configManager.setConfiguration(CONFIG_GROUP, PANEL_PREFIX, gson.toJson(panelStates));
-            log.debug("Wrote " + gson.toJson(panelStates) + "to " + CONFIG_GROUP + " " + PANEL_PREFIX);
-        }
-        
-    }
+		entryPanel.add(newEntryPanel.getMainPanel(), entryConstraints);
 
-    public void removeEntryPanel(EntryPanel panel) {
-        entryPanelList.remove(panel);
-        save();
-    }
+		reloadPanels();
+	}
 
-    // Sounds! //
-    public InputStream fetchSound(Integer hitType, Integer weaponId, Boolean usedSpecialAttack) {
-        log.debug("Total panels: "+entryPanelList.size());
-        for (EntryPanel panel : entryPanelList) {
-            // If it's the weaponID
-            if ((weaponId == panel.getWeaponId() && panel.getAudible()) || panel.getWeaponId() == -1) {
-                log.debug("Found weapon in panels");
-                log.debug("Skipping panel...");
-                log.debug("name         :"+panel.getName());
-                log.debug("weaponId     :"+panel.getWeaponId());
-                log.debug("audible      :"+panel.getAudible());
-                log.debug("soundPath    :"+panel.getCustomSoundPath());
-                log.debug("playing      :"+panel.getPlaying());
-                log.debug("replacing    :"+panel.getReplacing());
-                // Only special attacks
-                switch (panel.getReplacing()) {
-                    // Spec Missed
-                    case MISS: {
-                        if (!usedSpecialAttack) {
-                            if (hitType == HitsplatID.BLOCK_ME) {
-                                if (panel.getPlaying() == SoundOption.CUSTOM_SOUND) {
-                                    returnSound = loadCustomSound(panel.getCustomSoundPath());
-                                    if (returnSound != null)
-                                        log.debug("Found custom sound");
-                                    else {
-                                        client.addChatMessage(ChatMessageType.GAMEMESSAGE, "",
-                                                "Couldn't find custom sound file:" + panel.getCustomSoundPath(), null);
-                                        if (config.cantFind())
-                                            returnSound = loadDefaultSound(DEFAULT_MISS_FILE);
-                                        else
-                                            returnSound = null;
-                                    }
-                                } else {
-                                    returnSound = getDefaultSoundChoice(panel.getPlaying());
-                                }
-                                return returnSound;
-                            }
-                        }
-                    }
-                        break;
-                    case MAX: {
-                        if (!usedSpecialAttack) {
-                            log.debug("Max is being replaced");
-                            if (hitType == HitsplatID.DAMAGE_MAX_ME) {
-                                if (panel.getPlaying() == SoundOption.CUSTOM_SOUND) {
-                                    returnSound = loadCustomSound(panel.getCustomSoundPath());
-                                    if (returnSound != null)
-                                        log.debug("Found custom sound");
-                                    else {
-                                        client.addChatMessage(ChatMessageType.GAMEMESSAGE, "",
-                                                "Couldn't find custom sound file:" + panel.getCustomSoundPath(), null);
-                                        if (config.cantFind())
-                                            returnSound = loadDefaultSound(DEFAULT_SPEC_MAX_FILE);
-                                        else
-                                            returnSound = null;
-                                    }
-                                } else {
-                                    returnSound = getDefaultSoundChoice(panel.getPlaying());
-                                }
-                                return returnSound;
-                            }
-                        }
-                    }
-                        break;
-                    case SPECIAL_MISS: {
-                        if (usedSpecialAttack) {
-                            if (hitType == HitsplatID.BLOCK_ME) {
-                                if (panel.getPlaying() == SoundOption.CUSTOM_SOUND) {
-                                    returnSound = loadCustomSound(panel.getCustomSoundPath());
-                                    if (returnSound != null)
-                                        log.debug("Found custom sound");
-                                    else {
-                                        client.addChatMessage(ChatMessageType.GAMEMESSAGE, "",
-                                                "Couldn't find custom sound file:" + panel.getCustomSoundPath(), null);
-                                        if (config.cantFind())
-                                            returnSound = loadDefaultSound(DEFAULT_SPEC_MISS_FILE);
-                                        else
-                                            returnSound = null;
-                                    }
-                                } else {
-                                    returnSound = getDefaultSoundChoice(panel.getPlaying());
-                                }
-                                return returnSound;
-                            }
-                        }
-                    }
-                        break;
-                    // Spec Hit
-                    case SPECIAL_HIT: {
-                        if (usedSpecialAttack) {
-                            if (hitType == HitsplatID.DAMAGE_ME) {
-                                if (panel.getPlaying() == SoundOption.CUSTOM_SOUND) {
-                                    returnSound = loadCustomSound(panel.getCustomSoundPath());
-                                    if (returnSound != null)
-                                        log.debug("Found custom sound");
-                                    else {
-                                        client.addChatMessage(ChatMessageType.GAMEMESSAGE, "",
-                                                "Couldn't find custom sound file:" + panel.getCustomSoundPath(), null);
-                                        if (config.cantFind())
-                                            returnSound = loadDefaultSound(DEFAULT_SPEC_HIT_FILE);
-                                        else
-                                            returnSound = null;
-                                    }
-                                } else {
-                                    returnSound = getDefaultSoundChoice(panel.getPlaying());
-                                }
-                                return returnSound;
-                            }
-                        }
-                    }
-                        break;
-                    // Spec Maxed
-                    case SPECIAL_MAX: {
-                        if (usedSpecialAttack) {
-                            if (hitType == HitsplatID.DAMAGE_MAX_ME) {
-                                if (panel.getPlaying() == SoundOption.CUSTOM_SOUND) {
-                                    returnSound = loadCustomSound(panel.getCustomSoundPath());
-                                    if (returnSound != null)
-                                        log.debug("Found custom sound");
-                                    else {
-                                        client.addChatMessage(ChatMessageType.GAMEMESSAGE, "",
-                                                "Couldn't find custom sound file:" + panel.getCustomSoundPath(), null);
-                                        if (config.cantFind())
-                                            returnSound = loadDefaultSound(DEFAULT_SPEC_MAX_FILE);
-                                        else
-                                            returnSound = null;
-                                    }
-                                } else {
-                                    returnSound = getDefaultSoundChoice(panel.getPlaying());
-                                }
-                                return returnSound;
-                            }
-                        }
-                    }
-                }
-            } else {
-                log.debug("Skipping panel...");
-                log.debug("name         :"+panel.getName());
-                log.debug("weaponId     :"+panel.getWeaponId());
-                log.debug("audible      :"+panel.getAudible());
-                log.debug("soundPath    :"+panel.getCustomSoundPath());
-                log.debug("playing      :"+panel.getPlaying());
-                log.debug("replacing    :"+panel.getReplacing());
-            }
-        }
-        return null;
-    }
+	private void loadEntryPanels(JPanel parentPanel)
+	{
+		startup = true;
+		List<EntryPanelState> panelStates = plugin.gson.fromJson(plugin.configManager.getConfiguration(CONFIG_GROUP, PANEL_PREFIX), new TypeToken<List<EntryPanelState>>()
+		{
+		}.getType());
+		if (panelStates != null)
+		{
+			for (EntryPanelState panelState : panelStates)
+			{
+				if (panelState.getPanelName() != null)
+				{
+					log.debug("Found panel " + panelState.getPanelName());
+					EntryPanel newPanel = new EntryPanel(this, plugin);
+					newPanel.setPanelName(panelState.getPanelName());
+					if (panelState.getWeaponId() != null)
+					{
+						newPanel.setWeaponId(panelState.getWeaponId());
+					}
+					if (panelState.getAudible() != null)
+					{
+						newPanel.setAudible(panelState.getAudible());
+					}
+					if (panelState.getReplacing() != null)
+					{
+						Condition replacing = Condition.fromString(panelState.getReplacing());
+						newPanel.setReplacing(replacing);
+					}
+					if (panelState.getPlaying() != null)
+					{
+						SoundOption playing = SoundOption.fromString(panelState.getPlaying());
+						newPanel.setPlaying(playing);
+						if (playing == SoundOption.CUSTOM_SOUND)
+						{
+							newPanel.makeSoundInputVisible();
+						}
+						newPanel.setCustomSoundPath(panelState.getCustomSoundPath());
+					}
+					entryPanelList.add(newPanel);
+					GridBagConstraints entryConstraints = new GridBagConstraints();
+					entryConstraints.gridx = 0;
+					entryConstraints.gridy = parentPanel.getComponentCount() + 1;
+					entryConstraints.weightx = 1;
+					entryConstraints.fill = GridBagConstraints.NONE;
+					entryConstraints.anchor = GridBagConstraints.NORTH;
+					parentPanel.add(newPanel.getMainPanel(), entryConstraints);
+				}
 
-    public InputStream getDefaultSoundChoice(SoundOption choice) {
-        switch (choice) {
-            case SPECIAL_HIT: {
-                return loadDefaultSound(DEFAULT_SPEC_HIT_FILE);
-            }
-            case SPECIAL_MAX: {
-                return loadDefaultSound(DEFAULT_SPEC_MAX_FILE);
-            }
-            case SPECIAL_MISS: {
-                return loadDefaultSound(DEFAULT_SPEC_MISS_FILE);
-            }
-            case MISS: {
-                return loadDefaultSound(DEFAULT_MISS_FILE);
-            }
-            case MAX: {
-                return loadDefaultSound(DEFAULT_MAX_FILE);
-            }
-        }
-        return null;
-    }
+			}
+			startup = false;
+		}
+		else
+		{
+			log.debug("Found no panels");
+		}
+	}
 
-    public InputStream loadDefaultSound(String filePath) {
-        return AttackSoundNotificationsPlugin.class.getResourceAsStream(filePath);
-    }
+	public void save()
+	{
+		if (!startup)
+		{
+			log.debug("Saving");
+			List<EntryPanelState> panelStates = entryPanelList.stream().map(EntryPanelState::new).collect(Collectors.toList());
+			plugin.configManager.setConfiguration(CONFIG_GROUP, PANEL_PREFIX, plugin.gson.toJson(panelStates));
+			log.debug("Wrote " + plugin.gson.toJson(panelStates) + "to " + CONFIG_GROUP + " " + PANEL_PREFIX);
+		}
 
-    private BufferedInputStream loadCustomSound(String fileName) {
-        try {
-            return new BufferedInputStream(new FileInputStream(fileName));
-        } catch (FileNotFoundException e) {
-            return null;
-        }
-    }
+	}
 
-    public void findCustomSound(String filePath) {
-        InputStream soundStream = loadCustomSound(filePath);
-        if (soundStream != null) {
-            plugin.playCustomSound(soundStream);
-        } else {
-            plugin.playCustomSound(loadDefaultSound("/audio/file_not_found.wav"));
-        }
-    }
+	public void removeEntryPanel(EntryPanel panel)
+	{
+		entryPanelList.remove(panel);
+		save();
+	}
 
-    public void playDefaultSound(InputStream sound) {
-        plugin.playCustomSound(sound);
-    }
+	// Sounds! //
+	public InputStream fetchSound(Integer hitType, Integer weaponId, Boolean usedSpecialAttack)
+	{
+		log.debug("Total panels: " + entryPanelList.size());
+		for (EntryPanel panel : entryPanelList)
+		{
+			// If it's the weaponID
+			if ((weaponId == panel.getWeaponId() && panel.getAudible()) || panel.getWeaponId() == -1)
+			{
+				log.debug("Found weapon in panels");
+				log.debug("Skipping panel...");
+				log.debug("name :" + panel.getName());
+				log.debug("weaponId :" + panel.getWeaponId());
+				log.debug("audible  :" + panel.getAudible());
+				log.debug("soundPath:" + panel.getCustomSoundPath());
+				log.debug("playing  :" + panel.getPlaying());
+				log.debug("replacing:" + panel.getReplacing());
+				// Only special attacks
+				switch (panel.getReplacing())
+				{
+					// Spec Missed
+					case MISS:
+					{
+						if (!usedSpecialAttack)
+						{
+							if (hitType == HitsplatID.BLOCK_ME)
+							{
+								if (panel.getPlaying() == SoundOption.CUSTOM_SOUND)
+								{
+									returnSound = loadCustomSound(panel.getCustomSoundPath());
+									if (returnSound != null)
+									{
+										log.debug("Found custom sound");
+									}
+									else
+									{
+										plugin.client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "Couldn't find custom sound file:" + panel.getCustomSoundPath(), null);
+										if (plugin.config.cantFind())
+										{
+											returnSound = loadDefaultSound(DEFAULT_MISS_FILE);
+										}
+										else
+										{
+											returnSound = null;
+										}
+									}
+								}
+								else
+								{
+									returnSound = getDefaultSoundChoice(panel.getPlaying());
+								}
+								return returnSound;
+							}
+						}
+					}
+						break;
+					case MAX:
+					{
+						if (!usedSpecialAttack)
+						{
+							log.debug("Max is being replaced");
+							if (hitType == HitsplatID.DAMAGE_MAX_ME)
+							{
+								if (panel.getPlaying() == SoundOption.CUSTOM_SOUND)
+								{
+									returnSound = loadCustomSound(panel.getCustomSoundPath());
+									if (returnSound != null)
+									{
+										log.debug("Found custom sound");
+									}
+									else
+									{
+										plugin.client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "Couldn't find custom sound file:" + panel.getCustomSoundPath(), null);
+										if (plugin.config.cantFind())
+										{
+											returnSound = loadDefaultSound(DEFAULT_SPEC_MAX_FILE);
+										}
+										else
+										{
+											returnSound = null;
+										}
+									}
+								}
+								else
+								{
+									returnSound = getDefaultSoundChoice(panel.getPlaying());
+								}
+								return returnSound;
+							}
+						}
+					}
+						break;
+					case SPECIAL_MISS:
+					{
+						if (usedSpecialAttack)
+						{
+							if (hitType == HitsplatID.BLOCK_ME)
+							{
+								if (panel.getPlaying() == SoundOption.CUSTOM_SOUND)
+								{
+									returnSound = loadCustomSound(panel.getCustomSoundPath());
+									if (returnSound != null)
+									{
+										log.debug("Found custom sound");
+									}
+									else
+									{
+										plugin.client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "Couldn't find custom sound file:" + panel.getCustomSoundPath(), null);
+										if (plugin.config.cantFind())
+										{
+											returnSound = loadDefaultSound(DEFAULT_SPEC_MISS_FILE);
+										}
+										else
+										{
+											returnSound = null;
+										}
+									}
+								}
+								else
+								{
+									returnSound = getDefaultSoundChoice(panel.getPlaying());
+								}
+								return returnSound;
+							}
+						}
+					}
+						break;
+
+					case SPECIAL_HIT:
+					{
+						if (usedSpecialAttack)
+						{
+							if (hitType == HitsplatID.DAMAGE_ME)
+							{
+								if (panel.getPlaying() == SoundOption.CUSTOM_SOUND)
+								{
+									returnSound = loadCustomSound(panel.getCustomSoundPath());
+									if (returnSound != null)
+									{
+										log.debug("Found custom sound");
+									}
+									else
+									{
+										plugin.client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "Couldn't find custom sound file:" + panel.getCustomSoundPath(), null);
+										if (plugin.config.cantFind())
+										{
+											returnSound = loadDefaultSound(DEFAULT_SPEC_HIT_FILE);
+										}
+										else
+										{
+											returnSound = null;
+										}
+									}
+								}
+								else
+								{
+									returnSound = getDefaultSoundChoice(panel.getPlaying());
+								}
+								return returnSound;
+							}
+						}
+					}
+						break;
+					case SPECIAL_MAX:
+					{
+						if (usedSpecialAttack)
+						{
+							if (hitType == HitsplatID.DAMAGE_MAX_ME)
+							{
+								if (panel.getPlaying() == SoundOption.CUSTOM_SOUND)
+								{
+									returnSound = loadCustomSound(panel.getCustomSoundPath());
+									if (returnSound != null)
+									{
+										log.debug("Found custom sound");
+									}
+									else
+									{
+										plugin.client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "Couldn't find custom sound file:" + panel.getCustomSoundPath(), null);
+										if (plugin.config.cantFind())
+										{
+											returnSound = loadDefaultSound(DEFAULT_SPEC_MAX_FILE);
+										}
+										else
+										{
+											returnSound = null;
+										}
+									}
+								}
+								else
+								{
+									returnSound = getDefaultSoundChoice(panel.getPlaying());
+								}
+								return returnSound;
+							}
+						}
+					}
+				}
+			}
+			else
+			{
+				log.debug("Skipping panel...");
+				log.debug("name :" + panel.getName());
+				log.debug("weaponId :" + panel.getWeaponId());
+				log.debug("audible  :" + panel.getAudible());
+				log.debug("soundPath:" + panel.getCustomSoundPath());
+				log.debug("playing  :" + panel.getPlaying());
+				log.debug("replacing:" + panel.getReplacing());
+			}
+		}
+		return null;
+	}
+
+	public InputStream getDefaultSoundChoice(SoundOption choice)
+	{
+		switch (choice)
+		{
+			case SPECIAL_HIT:
+			{
+				return loadDefaultSound(DEFAULT_SPEC_HIT_FILE);
+			}
+			case SPECIAL_MAX:
+			{
+				return loadDefaultSound(DEFAULT_SPEC_MAX_FILE);
+			}
+			case SPECIAL_MISS:
+			{
+				return loadDefaultSound(DEFAULT_SPEC_MISS_FILE);
+			}
+			case MISS:
+			{
+				return loadDefaultSound(DEFAULT_MISS_FILE);
+			}
+			case MAX:
+			{
+				return loadDefaultSound(DEFAULT_MAX_FILE);
+			}
+			case CUSTOM_SOUND:
+			{
+				log.warn("How did you even get here? This shouldn't happen");
+				return loadDefaultSound(FILE_NOT_FOUND);
+			}
+		}
+		return null;
+	}
+
+	public InputStream loadDefaultSound(String filePath)
+	{
+		return AttackSoundNotificationsPlugin.class.getResourceAsStream(filePath);
+	}
+
+	private BufferedInputStream loadCustomSound(String fileName)
+	{
+		try
+		{
+			return new BufferedInputStream(new FileInputStream(fileName));
+		}
+		catch (FileNotFoundException e)
+		{
+			return null;
+		}
+	}
+
+	public void findCustomSound(String filePath)
+	{
+		InputStream soundStream = loadCustomSound(filePath);
+		if (soundStream != null)
+		{
+			plugin.playCustomSound(soundStream);
+		}
+		else
+		{
+			plugin.playCustomSound(loadDefaultSound(FILE_NOT_FOUND));
+		}
+	}
+
+	public void playDefaultSound(InputStream sound)
+	{
+		plugin.playCustomSound(sound);
+	}
 }

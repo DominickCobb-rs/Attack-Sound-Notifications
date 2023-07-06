@@ -9,3 +9,5 @@ nbactions.xml
 nb-configuration.xml
 nbproject/
 .vscode/
+Attack-Sounds-Notifications.code*
+*.xml
