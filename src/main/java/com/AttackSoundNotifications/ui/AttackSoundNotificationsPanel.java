@@ -102,6 +102,7 @@ public class AttackSoundNotificationsPanel extends PluginPanel {
     private final ChatboxPanelManager chatboxPanelManager;
     private final SpriteManager spriteManager;
     private final ItemManager itemManager;
+    private final Gson gson;
 
     static {
         final BufferedImage addIcon = ImageUtil.loadImageResource(AttackSoundNotificationsPlugin.class,
@@ -182,7 +183,7 @@ public class AttackSoundNotificationsPanel extends PluginPanel {
     public AttackSoundNotificationsPanel(AttackSoundNotificationsPlugin plugin, ChatboxPanelManager chatboxPanelManager,
             ChatboxItemSearch searchProvider,
             SpriteManager spriteManager, ItemManager itemManager, Client client,
-            AttackSoundNotificationsConfig config, ConfigManager configManager) {
+            AttackSoundNotificationsConfig config, ConfigManager configManager, Gson gson) {
         this.plugin = plugin;
         this.config = config;
         this.chatboxPanelManager = chatboxPanelManager;
@@ -191,6 +192,7 @@ public class AttackSoundNotificationsPanel extends PluginPanel {
         this.spriteManager = spriteManager;
         this.client = client;
         this.configManager = configManager;
+        this.gson = gson;
         setLayout(new BorderLayout());
         JPanel entryPanel = new JPanel(new GridBagLayout());
         JPanel northPanel = new JPanel(new BorderLayout());
@@ -249,7 +251,6 @@ public class AttackSoundNotificationsPanel extends PluginPanel {
     }
 
     private void loadEntryPanels(JPanel parentPanel) {
-        Gson gson = new Gson();
         List<EntryPanelState> panelStates = gson.fromJson(configManager.getConfiguration(CONFIG_GROUP, PANEL_PREFIX),
                 new TypeToken<List<EntryPanelState>>() {
                 }.getType());
@@ -301,7 +302,6 @@ public class AttackSoundNotificationsPanel extends PluginPanel {
 
     public void save() {
         log.debug("Saving");
-        Gson gson = new Gson();
         List<EntryPanelState> panelStates = entryPanelList.stream()
                 .map(EntryPanelState::new)
                 .collect(Collectors.toList());

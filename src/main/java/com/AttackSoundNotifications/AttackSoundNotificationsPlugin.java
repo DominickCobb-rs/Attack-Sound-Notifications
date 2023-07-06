@@ -85,7 +85,7 @@ import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 
-
+import com.google.gson.Gson;
 import com.google.inject.Provides;
 
 import javax.imageio.ImageIO;
@@ -140,6 +140,8 @@ public class AttackSoundNotificationsPlugin extends Plugin {
     public ItemManager itemManager;
 	@Inject
     public ConfigManager configManager;
+	@Inject
+	public Gson gson;
 	private AttackSoundNotificationsPanel pluginPanel;
 	private Clip clip = null;
 	private NavigationButton navButton;
@@ -158,7 +160,7 @@ public class AttackSoundNotificationsPlugin extends Plugin {
 
 	@Override
 	protected void startUp() throws Exception {
-		pluginPanel = new AttackSoundNotificationsPanel(this, chatboxPanelManager, searchProvider, spriteManager, itemManager, client, config, configManager);
+		pluginPanel = new AttackSoundNotificationsPanel(this, chatboxPanelManager, searchProvider, spriteManager, itemManager, client, config, configManager, gson);
 		BufferedImage icon = ImageIO.read(getClass().getResourceAsStream("/icons/panelIcon.png"));//ImageIO.read(AttackSoundNotificationsPlugin.class.getResourceAsStream("/icon.png"));
 		navButton = NavigationButton.builder()
 			.tooltip("Attack Sounds")
