@@ -292,7 +292,9 @@ public class AttackSoundNotificationsPanel extends PluginPanel {
                     entryConstraints.anchor = GridBagConstraints.NORTH;
                     parentPanel.add(panel.getMainPanel(), entryConstraints);
                 }
+                
             }
+            save();
         } else
             log.debug("Found no panels");
     }

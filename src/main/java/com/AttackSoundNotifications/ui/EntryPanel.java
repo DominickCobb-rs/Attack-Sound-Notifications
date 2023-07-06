@@ -89,7 +89,7 @@ public class EntryPanel extends JPanel {
     private final ConfigManager configManager;
     private final SpriteManager spriteManager;
     private final ItemManager itemManager;
-    private final JPanel entryPanel;    
+    private final JPanel entryPanel;
 
     private final JPanel chooserPanel = new JPanel(new BorderLayout());
     private final JPanel removePanel = new JPanel(new BorderLayout());
@@ -99,38 +99,38 @@ public class EntryPanel extends JPanel {
     private final JPanel buttons = new JPanel(new BorderLayout());
 
     // Data fields //
-        private JLabel name = new JLabel();
-        private JLabel weaponIconLabel = new JLabel();
-        private JLabel removeEntry = new JLabel();
-        private JLabel audible = new JLabel();
-        private JTextField customSoundTextField = new JTextField();
-        private JLabel selectFile = new JLabel();
-        private JButton testSound = new JButton("Play the sound");
-        private PanelData panelData;
-        private JComboBox<Condition> replacing = new JComboBox<>(new DefaultComboBoxModel<>(Condition.values()));
-        private JComboBox<SoundOption> playing = new JComboBox<>(new DefaultComboBoxModel<>(SoundOption.values()));
-        private ImageIcon weaponIcon = new ImageIcon(
-                ImageUtil.loadImageResource(AttackSoundNotificationsPlugin.class, "/icons/panelIcon.png"));
+    private JLabel name = new JLabel();
+    private JLabel weaponIconLabel = new JLabel();
+    private JLabel removeEntry = new JLabel();
+    private JLabel audible = new JLabel();
+    private JTextField customSoundTextField = new JTextField();
+    private JLabel selectFile = new JLabel();
+    private JButton testSound = new JButton("Play the sound");
+    private PanelData panelData;
+    private JComboBox<Condition> replacing = new JComboBox<>(new DefaultComboBoxModel<>(Condition.values()));
+    private JComboBox<SoundOption> playing = new JComboBox<>(new DefaultComboBoxModel<>(SoundOption.values()));
+    private ImageIcon weaponIcon = new ImageIcon(
+            ImageUtil.loadImageResource(AttackSoundNotificationsPlugin.class, "/icons/panelIcon.png"));
     /////////////////
     // Not my stuff - From the ScreenMarkerPluginPanel //
-        private final FlatTextField nameInput = new FlatTextField();
-        private final JLabel rename = new JLabel("Rename");
-        private final JLabel save = new JLabel("Save");
-        private final JLabel cancel = new JLabel("Cancel");
-        private static final Border NAME_BOTTOM_BORDER = new CompoundBorder(
-                BorderFactory.createMatteBorder(0, 0, 1, 0, ColorScheme.DARK_GRAY_COLOR),
-                BorderFactory.createLineBorder(ColorScheme.DARKER_GRAY_COLOR));
+    private final FlatTextField nameInput = new FlatTextField();
+    private final JLabel rename = new JLabel("Rename");
+    private final JLabel save = new JLabel("Save");
+    private final JLabel cancel = new JLabel("Cancel");
+    private static final Border NAME_BOTTOM_BORDER = new CompoundBorder(
+            BorderFactory.createMatteBorder(0, 0, 1, 0, ColorScheme.DARK_GRAY_COLOR),
+            BorderFactory.createLineBorder(ColorScheme.DARKER_GRAY_COLOR));
     //////////////////
     // Icons //
-        public static final ImageIcon AUDIBLE_ICON;
-        public static final ImageIcon AUDIBLE_HOVER_ICON;
-        public static final ImageIcon INAUDIBLE_ICON;
-        public static final ImageIcon INAUDIBLE_HOVER_ICON;
-        public static final ImageIcon REMOVE_ICON;
-        public static final ImageIcon REMOVE_HOVER_ICON;
-        public static final ImageIcon OPEN_ICON;
-        public static final ImageIcon OPEN_HOVER_ICON;
-        static {
+    public static final ImageIcon AUDIBLE_ICON;
+    public static final ImageIcon AUDIBLE_HOVER_ICON;
+    public static final ImageIcon INAUDIBLE_ICON;
+    public static final ImageIcon INAUDIBLE_HOVER_ICON;
+    public static final ImageIcon REMOVE_ICON;
+    public static final ImageIcon REMOVE_HOVER_ICON;
+    public static final ImageIcon OPEN_ICON;
+    public static final ImageIcon OPEN_HOVER_ICON;
+    static {
             final BufferedImage audibleImg = ImageUtil.loadImageResource(AttackSoundNotificationsPlugin.class,
                     "/icons/on.png");
             AUDIBLE_ICON = new ImageIcon(audibleImg);
@@ -169,7 +169,7 @@ public class EntryPanel extends JPanel {
         this.weaponId = weaponId;
         this.setName("Custom Sound " + (entryPanel.getComponentCount() + 1));
         
-        customSoundTextField.setFocusable(false);
+        customSoundTextField.setFocusable(true);
         
         replacing.setFocusable(false);
         replacing.setToolTipText("When to play the sound");
@@ -177,7 +177,7 @@ public class EntryPanel extends JPanel {
         playing.setFocusable(false);
         playing.setToolTipText("What sound to play");
 
-        testSound.setFocusable(false);
+        testSound.setFocusable(true);
         testSound.setToolTipText("Play the selected sound, if it exists");
 
         JPanel nameWrapper = new JPanel(new BorderLayout());
@@ -236,6 +236,7 @@ public class EntryPanel extends JPanel {
             @Override
             public void mousePressed(MouseEvent mouseEvent) {
                 save();
+                parent.requestFocusInWindow();
             }
 
             @Override
@@ -256,6 +257,7 @@ public class EntryPanel extends JPanel {
             @Override
             public void mousePressed(MouseEvent mouseEvent) {
                 cancel();
+                parent.requestFocusInWindow();
             }
 
             @Override
@@ -307,6 +309,7 @@ public class EntryPanel extends JPanel {
                 } else if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
                     cancel();
                 }
+                parent.requestFocusInWindow();
             }
         });
 
@@ -457,7 +460,6 @@ public class EntryPanel extends JPanel {
                 entryPanel.remove(mainPanel);
                 parent.reloadPanels();
                 parent.save();
-
             }
 
             @Override
@@ -500,7 +502,17 @@ public class EntryPanel extends JPanel {
         customSoundTextField.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                parent.save();
+                if(customSoundTextField.getText().endsWith(".wav"))
+                {
+                    parent.requestFocusInWindow();
+                    parent.save();
+                }
+                else {
+                    JOptionPane.showMessageDialog(EntryPanel.this,
+                            "Acceptable file types: .wav",
+                            "Bad file", JOptionPane.ERROR_MESSAGE);
+                    customSoundTextField.setText("");
+                }
             }
         });
 

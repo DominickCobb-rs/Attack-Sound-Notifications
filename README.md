@@ -11,31 +11,17 @@ Well this plugin may be of use to you then. You have the option to toggle notifi
 
 ## Custom Audio
 ### CURRENT:
-Default audio is packed into the repo. You can change the audio by 
+Default audio is packed into the repo for the 5 times audio can be played.
 
-1. Navigate to your .runelite folder (%userprofile%\.runelite\)
-    1. You can right-click the screenshot button in the top right of the runelite client
-    2. Then click open screenshot folder, and navigate to the .runelite directory
-2. Create a folder called 'attacknotifications'
-3. Add your sound .wav file in the folder
-
-Acceptable File Names:
-* max.wav
-* miss.wav
-* spec_miss.wav
-* spec_hit.wav
-* spec_max.wav
-* arclight_spec_miss.wav
-* arclight_spec_hit.wav
-* dwh_spec_miss.wav
-* dwh_spec_hit.wav
-* dwh_spec_max.wav
-* bgs_spec_miss.wav
-* bgs_spec_hit.wav
-* bgs_spec_max.wav
-* bone_dagger_spec_miss.wav
-* bone_dagger_spec_hit.wav
-* bone_dagger_spec_default.wav
+To use custom audio:
+1. Create a .wav file
+2. Open the plugin panel
+3. Click the second dropdown and select "Custom Audio" and select the file by either:
+    * Enter the full filepath into the empty text box
+    * Click the folder and select the file on your computer
+    * **IMPORTANT** THE FILE MUST BE A .WAV FILE
+4. Test the sound with the button
+    * If the sound can't be found, a windows error sound will play
 
 ### FUTURE PLANS:
 1. There will be a panel where you can choose the weapon, enter the audio file location on disc, and it'll play for when you want. The goal is something like the transmog plugin where you can choose a weapon and then choose its miss/hit/spec/max audio files if you so choose.
