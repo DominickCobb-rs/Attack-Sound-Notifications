@@ -23,12 +23,5 @@ To use custom audio:
 4. Test the sound with the button
     * If the sound can't be found, a windows error sound will play
 
-### FUTURE PLANS:
-1. There will be a panel where you can choose the weapon, enter the audio file location on disc, and it'll play for when you want. The goal is something like the transmog plugin where you can choose a weapon and then choose its miss/hit/spec/max audio files if you so choose.
-2. I need to work out some logic issues in the way sound choices happen. It's currently a tangled spaghetti mess of what plays and when. When everything is on, it works as intended. If you toggle something off, there's really no telling exactly what it'll do from an outside perspective.
-
 ### Other
 Ranged weapons have a different set of stuff to check for specs and their hits, so I'll probably have to look into that more too.
-
-## Credit
-Big shoutout to Ferraiic and their [hit-sounds](https://github.com/Hit-Sounds/hit-sounds) plugin. Used a **lot** of that code to make this work, and adapted some of the RuneLite Special Attack Counter plugin.
