@@ -553,7 +553,7 @@ public class EntryPanel extends JPanel {
                 if (getPlaying() == SoundOption.CUSTOM_SOUND)
                     parent.findCustomSound(getCustomSoundPath());
                 else{
-                    parent.playDefaultSound(parent.getDefaultSoundChoice(getReplacing()));
+                    parent.playDefaultSound(parent.getDefaultSoundChoice(getPlaying()));
                 }
             }
         });

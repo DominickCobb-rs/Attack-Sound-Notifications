@@ -349,7 +349,7 @@ public class AttackSoundNotificationsPanel extends PluginPanel {
                                             returnSound = null;
                                     }
                                 } else {
-                                    returnSound = otherGetDefaultSoundChoice(panel.getPlaying());
+                                    returnSound = getDefaultSoundChoice(panel.getPlaying());
                                 }
                                 return returnSound;
                             }
@@ -373,7 +373,7 @@ public class AttackSoundNotificationsPanel extends PluginPanel {
                                             returnSound = null;
                                     }
                                 } else {
-                                    returnSound = otherGetDefaultSoundChoice(panel.getPlaying());
+                                    returnSound = getDefaultSoundChoice(panel.getPlaying());
                                 }
                                 return returnSound;
                             }
@@ -396,7 +396,7 @@ public class AttackSoundNotificationsPanel extends PluginPanel {
                                             returnSound = null;
                                     }
                                 } else {
-                                    returnSound = otherGetDefaultSoundChoice(panel.getPlaying());
+                                    returnSound = getDefaultSoundChoice(panel.getPlaying());
                                 }
                                 return returnSound;
                             }
@@ -420,7 +420,7 @@ public class AttackSoundNotificationsPanel extends PluginPanel {
                                             returnSound = null;
                                     }
                                 } else {
-                                    returnSound = otherGetDefaultSoundChoice(panel.getPlaying());
+                                    returnSound = getDefaultSoundChoice(panel.getPlaying());
                                 }
                                 return returnSound;
                             }
@@ -444,7 +444,7 @@ public class AttackSoundNotificationsPanel extends PluginPanel {
                                             returnSound = null;
                                     }
                                 } else {
-                                    returnSound = otherGetDefaultSoundChoice(panel.getPlaying());
+                                    returnSound = getDefaultSoundChoice(panel.getPlaying());
                                 }
                                 return returnSound;
                             }
@@ -464,28 +464,7 @@ public class AttackSoundNotificationsPanel extends PluginPanel {
         return null;
     }
 
-    public InputStream getDefaultSoundChoice(Condition choice) {
-        switch (choice) {
-            case SPECIAL_HIT: {
-                return loadDefaultSound(DEFAULT_SPEC_HIT_FILE);
-            }
-            case SPECIAL_MAX: {
-                return loadDefaultSound(DEFAULT_SPEC_MAX_FILE);
-            }
-            case SPECIAL_MISS: {
-                return loadDefaultSound(DEFAULT_SPEC_MISS_FILE);
-            }
-            case MISS: {
-                return loadDefaultSound(DEFAULT_MISS_FILE);
-            }
-            case MAX: {
-                return loadDefaultSound(DEFAULT_MAX_FILE);
-            }
-        }
-        return null;
-    }
-
-    private InputStream otherGetDefaultSoundChoice(SoundOption choice) {
+    public InputStream getDefaultSoundChoice(SoundOption choice) {
         switch (choice) {
             case SPECIAL_HIT: {
                 return loadDefaultSound(DEFAULT_SPEC_HIT_FILE);
