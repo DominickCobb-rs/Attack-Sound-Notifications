@@ -1,19 +1,18 @@
 package com.AttackSoundNotifications.ui;
 
-import java.util.concurrent.atomic.AtomicInteger;
 import javax.swing.*;
 import com.AttackSoundNotifications.ui.AttackSoundNotificationsPanel.Condition;
 import com.AttackSoundNotifications.ui.AttackSoundNotificationsPanel.SoundOption;
 
 public class PanelData {
-    private final AtomicInteger weaponId;
+    private final Integer weaponId;
     private final JLabel enable;
     private final JTextField soundFilePath;
     private final JComboBox<SoundOption> soundChoice;
     private final JComboBox<Condition> replacementChoice;
     private final JLabel name;
 
-    public PanelData(AtomicInteger weaponId, JLabel enable, JTextField soundFilePath,
+    public PanelData(Integer weaponId, JLabel enable, JTextField soundFilePath,
             JComboBox<SoundOption> soundChoice, JComboBox<Condition> replacementChoice, JLabel name) {
         this.weaponId = weaponId;
         this.enable = enable;
@@ -28,14 +27,14 @@ public class PanelData {
     }
 
     public boolean active() {
-        if (enable.getIcon() == NewEntryPanel.AUDIBLE_ICON || enable.getIcon() == NewEntryPanel.AUDIBLE_HOVER_ICON)
+        if (enable.getIcon() == EntryPanel.AUDIBLE_ICON || enable.getIcon() == EntryPanel.AUDIBLE_HOVER_ICON)
             return true;
         else
             return false;
     }
 
     public int getWeaponId() {
-        return weaponId.get();
+        return weaponId;
     }
 
     public Condition getSoundReplacing() {

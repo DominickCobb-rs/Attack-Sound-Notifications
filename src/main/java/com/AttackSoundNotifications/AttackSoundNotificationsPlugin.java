@@ -120,6 +120,8 @@ import java.io.*;
 @PluginDescriptor(name = "Attack Sound Notifications", description = "A plugin that plays sounds based on hitsplats and special attacks", tags = {
 		"special", "sounds", "notifications" }, loadWhenOutdated = true, enabledByDefault = false)
 public class AttackSoundNotificationsPlugin extends Plugin {
+	public static final String CONFIG_GROUP = "attacknotifications";
+	public static final String PANEL_PREFIX = "attackNotificationsPanel_";
 	@Inject
 	private Client client;
 	@Inject
@@ -136,6 +138,8 @@ public class AttackSoundNotificationsPlugin extends Plugin {
     public SpriteManager spriteManager;
     @Inject
     public ItemManager itemManager;
+	@Inject
+    public ConfigManager configManager;
 	private AttackSoundNotificationsPanel pluginPanel;
 	private Clip clip = null;
 	private NavigationButton navButton;
@@ -154,7 +158,7 @@ public class AttackSoundNotificationsPlugin extends Plugin {
 
 	@Override
 	protected void startUp() throws Exception {
-		pluginPanel = new AttackSoundNotificationsPanel(this, chatboxPanelManager, searchProvider, spriteManager, itemManager, client, config);
+		pluginPanel = new AttackSoundNotificationsPanel(this, chatboxPanelManager, searchProvider, spriteManager, itemManager, client, config, configManager);
 		BufferedImage icon = ImageIO.read(getClass().getResourceAsStream("/icons/panelIcon.png"));//ImageIO.read(AttackSoundNotificationsPlugin.class.getResourceAsStream("/icon.png"));
 		navButton = NavigationButton.builder()
 			.tooltip("Attack Sounds")
@@ -168,6 +172,7 @@ public class AttackSoundNotificationsPlugin extends Plugin {
 
 	@Override
 	protected void shutDown() throws Exception {
+		pluginPanel.save();
 		clientToolbar.removeNavigation(navButton);
 		log.info("Attack Sounds Notifier stopped!");
 	}
