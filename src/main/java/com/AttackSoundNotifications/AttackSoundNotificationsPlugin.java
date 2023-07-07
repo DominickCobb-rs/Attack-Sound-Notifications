@@ -254,23 +254,22 @@ public class AttackSoundNotificationsPlugin extends Plugin
 		// so we capture the current server tick counter here for use in computing the
 		// final hitsplat tick
 		clientThread.invokeLater(() -> {
-			ItemContainer equipment = client.getItemContainer(InventoryID.EQUIPMENT);
-			if (equipment != null)
+			if (specialWeapon == -1)
 			{
-				Item weapon = equipment.getItem(EquipmentInventorySlot.WEAPON.getSlotIdx());
-				if (weapon != null)
+				ItemContainer equipment = client.getItemContainer(InventoryID.EQUIPMENT);
+				if (equipment != null)
 				{
-					specialWeapon = weapon.getId();
-					log.debug("Set specialWeapon to " + specialWeapon);
+					Item weapon = equipment.getItem(EquipmentInventorySlot.WEAPON.getSlotIdx());
+					if (weapon != null)
+					{
+						specialWeapon = weapon.getId();
+						log.debug("Set specialWeapon to " + specialWeapon);
+					}
+					else
+					{
+						specialWeapon = -1;
+					}
 				}
-				else
-				{
-					specialWeapon = -1;
-				}
-			}
-			else
-			{
-				specialWeapon = -1;
 			}
 			specced = true;
 			log.debug("Set specced to true");
