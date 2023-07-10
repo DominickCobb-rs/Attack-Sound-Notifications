@@ -202,8 +202,11 @@ public class AttackSoundNotificationsPanel extends PluginPanel
 
 	public void reloadPanels()
 	{
-		this.revalidate();
-		this.repaint();
+		plugin.clientThread.invokeLater(() ->
+		{
+			this.revalidate();
+			this.repaint();
+		});
 	}
 
 	private void addNewEntry()
@@ -354,7 +357,7 @@ public class AttackSoundNotificationsPanel extends PluginPanel
 							}
 						}
 					}
-						break;
+					break;
 					case MAX:
 					{
 						if (!usedSpecialAttack)
@@ -390,7 +393,7 @@ public class AttackSoundNotificationsPanel extends PluginPanel
 							}
 						}
 					}
-						break;
+					break;
 					case SPECIAL_MISS:
 					{
 						if (usedSpecialAttack)
@@ -425,7 +428,7 @@ public class AttackSoundNotificationsPanel extends PluginPanel
 							}
 						}
 					}
-						break;
+					break;
 
 					case SPECIAL_HIT:
 					{
@@ -461,7 +464,7 @@ public class AttackSoundNotificationsPanel extends PluginPanel
 							}
 						}
 					}
-						break;
+					break;
 					case SPECIAL_MAX:
 					{
 						if (usedSpecialAttack)

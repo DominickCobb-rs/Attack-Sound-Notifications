@@ -81,9 +81,11 @@ public class EntryPanel extends JPanel
 	private ImageIcon weaponIcon;
 	private final AttackSoundNotificationsPanel pluginPanel;
 	private final AttackSoundNotificationsPlugin plugin;
-	private final JPanel weaponIconPanel = new JPanel(new BorderLayout()){
+	private final JPanel weaponIconPanel = new JPanel(new BorderLayout())
+	{
 		@Override
-		protected void paintComponent(Graphics g) {
+		protected void paintComponent(Graphics g)
+		{
 			super.paintComponent(g);
 			ImageIcon image = new ImageIcon(ImageUtil.loadImageResource(AttackSoundNotificationsPlugin.class, "/icons/weapon_back.png"));
 			int x = (getWidth() - image.getIconWidth()) / 2;
@@ -214,7 +216,7 @@ public class EntryPanel extends JPanel
 					EntryPanel.this.setName("Custom Sound " + pluginPanel.entryPanel.getComponentCount());
 					nameInput.setText("Custom Sound " + pluginPanel.entryPanel.getComponentCount());
 					audible.setIcon(AUDIBLE_ICON);
-					weaponLabel.setIcon(weaponIcon);
+					setWeaponIcons(DEFAULT_WEAPON_ICON);
 					weaponId = -1;
 					replacing.setSelectedIndex(0);
 					playing.setSelectedIndex(0);
@@ -355,7 +357,7 @@ public class EntryPanel extends JPanel
 
 		weaponLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		weaponLabel.setBorder(new EmptyBorder(2, 2, 2, 2));
-		weaponIconPanel.add(weaponLabel,BorderLayout.CENTER);
+		weaponIconPanel.add(weaponLabel, BorderLayout.CENTER);
 		weaponIconPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 		weaponIconPanel.setMinimumSize(new Dimension(32, 32));
 		weaponIconPanel.setPreferredSize(new Dimension(32, 32));
@@ -430,9 +432,9 @@ public class EntryPanel extends JPanel
 				if (plugin.client.getGameState() != GameState.LOGGED_IN)
 				{
 					JOptionPane.showMessageDialog(pluginPanel,
-							"This plugin uses the in-game item search panel; you must be logged in to use this.",
-							"Log in to choose items",
-							JOptionPane.ERROR_MESSAGE);
+						"This plugin uses the in-game item search panel; you must be logged in to use this.",
+						"Log in to choose items",
+						JOptionPane.ERROR_MESSAGE);
 					weaponLabel.setIcon(weaponIcon);
 					return;
 				}

@@ -202,31 +202,6 @@ public class AttackSoundNotificationsPlugin extends Plugin
 		log.info("Attack Sounds Notifier stopped!");
 	}
 
-	@Subscribe
-	public void onGameTick(GameTick event)
-	{
-		if (lastSpecHitsplat != null)
-		{
-			log.debug("Attack detected");
-			int hitType = lastSpecHitsplat.getHitsplatType();
-			log.debug("Fetching sound with the following... hitType: " + hitType + " Weapon:" + specialWeapon
-				+ "specced: " + specced);
-			soundToPlay = pluginPanel.fetchSound(hitType, specialWeapon, specced);
-			if (soundToPlay == null)
-			{
-				log.debug("No sound fetched");
-			}
-			if (soundToPlay != null)
-			{
-				playCustomSound(soundToPlay);
-				soundToPlay = null;
-			}
-			specialWeapon = -1;
-			lastSpecHitsplat = null;
-			specced = false;
-		}
-	}
-
 	// From the SpecialAttackCounter plugin
 	@Subscribe
 	public void onVarbitChanged(VarbitChanged event)
@@ -295,10 +270,27 @@ public class AttackSoundNotificationsPlugin extends Plugin
 					{
 						specialWeapon = weapon.getId();
 						log.debug("Found weaponId " + specialWeapon);
+						int hitType = lastSpecHitsplat.getHitsplatType();
+						log.debug("Fetching sound with the following... hitType: " + hitType + " Weapon:" + specialWeapon
+							+ "specced: " + specced);
+						soundToPlay = pluginPanel.fetchSound(hitType, specialWeapon, specced);
+						if (soundToPlay == null)
+						{
+							log.debug("No sound fetched");
+						}
+						if (soundToPlay != null)
+						{
+							playCustomSound(soundToPlay);
+							soundToPlay = null;
+						}
+						specialWeapon = -1;
+						lastSpecHitsplat = null;
+						specced = false;
 					}
 				}
 			}
-			lastSpecHitsplat = hitsplat;
+
+
 		}
 	}
 
