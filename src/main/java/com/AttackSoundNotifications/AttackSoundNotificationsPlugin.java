@@ -289,8 +289,6 @@ public class AttackSoundNotificationsPlugin extends Plugin
 					}
 				}
 			}
-
-
 		}
 	}
 
