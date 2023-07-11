@@ -7,7 +7,6 @@ public class EntryPanelState
 	private String audible_status;
 	private String customSoundTextField_contents;
 	private String replacing_value;
-	private String playing_value;
 
 	public EntryPanelState(EntryPanel panel)
 	{
@@ -16,7 +15,6 @@ public class EntryPanelState
 		this.audible_status = panel.getAudibleString();
 		this.customSoundTextField_contents = panel.getCustomSoundPath();
 		this.replacing_value = panel.getReplacingString();
-		this.playing_value = panel.getPlayingString();
 	}
 
 	public String getPanelName()
@@ -42,10 +40,5 @@ public class EntryPanelState
 	public String getReplacing()
 	{
 		return replacing_value;
-	}
-
-	public String getPlaying()
-	{
-		return playing_value;
 	}
 }

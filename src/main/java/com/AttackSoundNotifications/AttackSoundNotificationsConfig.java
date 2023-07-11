@@ -29,9 +29,8 @@ public interface AttackSoundNotificationsConfig extends Config
 	{
 		return "Adding a custom sound:\n" +
 			"Add your custom sound file anywhere you want\n" +
-			"Check the Custom sound radio button\n" +
 			"Copy the absolute filepath\n" +
-			"Paste the filepath into the text box under the radio buttons\n" +
+			"Paste the filepath into the text box under the dropdown menus\n" +
 			"Click \"Test the sound\" to make sure the plugin found it\n\n" +
 			"You'll receive a chat message in-game if your file can't be found when you attack.";
 	}

@@ -27,6 +27,7 @@
 /*
  * Copyright (c) 2018, Tomas Slusny <slusnucky@gmail.com>
  * Copyright (c) 2018, Ron Young <https://github.com/raiyni>
+ * Copyright (c) 2023, Jacob Browder <https://github.com/DominickCobb-rs>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -54,7 +55,6 @@ package com.AttackSoundNotifications.ui;
 
 import com.AttackSoundNotifications.AttackSoundNotificationsPlugin;
 import com.AttackSoundNotifications.ui.AttackSoundNotificationsPanel.Condition;
-import com.AttackSoundNotifications.ui.AttackSoundNotificationsPanel.SoundOption;
 
 import net.runelite.api.GameState;
 import net.runelite.client.ui.ColorScheme;
@@ -108,7 +108,8 @@ public class EntryPanel extends JPanel
 	private JLabel selectFile = new JLabel();
 	private JButton testSound = new JButton("Play the sound");
 	private JComboBox<Condition> replacing = new JComboBox<>(new DefaultComboBoxModel<>(Condition.values()));
-	private JComboBox<SoundOption> playing = new JComboBox<>(new DefaultComboBoxModel<>(SoundOption.values()));
+	private FlatTextField playing = new FlatTextField();
+	private JLabel clearPlaying = new JLabel();
 	/////////////////
 
 	// Not my stuff - From the ScreenMarkerPluginPanel //
@@ -177,7 +178,16 @@ public class EntryPanel extends JPanel
 		replacing.setToolTipText("When to play the sound");
 
 		playing.setFocusable(false);
+		playing.setEditable(false);
 		playing.setToolTipText("What sound to play");
+		playing.setText("No sound selected");
+		playing.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+		playing.getTextField().setForeground(Color.WHITE);
+		playing.getTextField().setHorizontalAlignment(JTextField.CENTER);
+
+		clearPlaying.setIcon(REMOVE_ICON);
+		clearPlaying.setToolTipText("Clear the custom sound path");
+		clearPlaying.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
 		testSound.setFocusable(false);
 		testSound.setToolTipText("Play the selected sound, if it exists");
@@ -219,7 +229,7 @@ public class EntryPanel extends JPanel
 					setWeaponIcons(DEFAULT_WEAPON_ICON);
 					weaponId = -1;
 					replacing.setSelectedIndex(0);
-					playing.setSelectedIndex(0);
+					playing.setText("");
 					textEntry.setVisible(false);
 					pluginPanel.save();
 				}
@@ -374,15 +384,14 @@ public class EntryPanel extends JPanel
 		audible.setHorizontalAlignment(SwingConstants.CENTER);
 		audible.setToolTipText("Enable/Disable");
 		iconPanel.add(audible, BorderLayout.WEST);
-		iconPanel.add(playing, BorderLayout.EAST);
+		iconPanel.add(playing, BorderLayout.CENTER);
+		iconPanel.add(clearPlaying, BorderLayout.EAST);
 		iconPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 		iconPanel.setBorder(new EmptyBorder(4, 4, 4, 4));
 
 		selectFile.setIcon(OPEN_ICON);
-		selectFile.setVisible(false);
 		selectFile.setToolTipText("Find the file in on your computer");
 
-		textEntry.setVisible(false);
 		textEntry.add(new JLabel("Enter your custom sound here:"), BorderLayout.NORTH);
 		textEntry.add(customSoundTextField, BorderLayout.CENTER);
 		textEntry.add(selectFile, BorderLayout.EAST);
@@ -411,8 +420,8 @@ public class EntryPanel extends JPanel
 		CompoundBorder finalBorder = new CompoundBorder(new EmptyBorder(1, 0, 1, 0), semiFinalBorder);
 
 		mainPanel.setBorder(finalBorder);
-		playing.setPreferredSize(new Dimension(170, 32));
-		replacing.setPreferredSize(playing.getPreferredSize());
+		replacing.setMaximumSize(new Dimension(160, 32));
+		replacing.setPreferredSize(new Dimension(155, 32));
 
 		audible.setIcon(AUDIBLE_ICON);
 		audible.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -552,23 +561,35 @@ public class EntryPanel extends JPanel
 			}
 		});
 
-		playing.addActionListener(new ActionListener()
+		clearPlaying.addMouseListener(new MouseAdapter()
 		{
 			@Override
-			public void actionPerformed(ActionEvent e)
+			public void mousePressed(MouseEvent mouseEvent)
 			{
-				// Default sound option selected
-				if (playing.getSelectedItem().equals(SoundOption.CUSTOM_SOUND))
+				boolean shiftHeld = mouseEvent.isShiftDown();
+				if (!shiftHeld)
 				{
-					textEntry.setVisible(true);
-					selectFile.setVisible(true);
+					int confirm = JOptionPane.showConfirmDialog(EntryPanel.this, "Clear the sound path?", "Confirm", JOptionPane.YES_NO_OPTION);
+					if (confirm != 0)
+					{
+						return; // If user doesn't confirm, we do nothing more
+					}
 				}
-				else
-				{
-					textEntry.setVisible(false);
-					selectFile.setVisible(false);
-				}
-				pluginPanel.save();
+				playing.setText("No sound selected");
+				customSoundTextField.setText("");
+				save();
+			}
+
+			@Override
+			public void mouseEntered(MouseEvent mouseEvent)
+			{
+				clearPlaying.setIcon(REMOVE_HOVER_ICON);
+			}
+
+			@Override
+			public void mouseExited(MouseEvent mouseEvent)
+			{
+				clearPlaying.setIcon(REMOVE_ICON);
 			}
 		});
 
@@ -579,13 +600,16 @@ public class EntryPanel extends JPanel
 			{
 				if (customSoundTextField.getText().endsWith(".wav"))
 				{
+					String text = customSoundTextField.getText();
 					pluginPanel.requestFocusInWindow();
+					playing.setText(text.substring(text.lastIndexOf('/')+1,text.lastIndexOf('.')));
 					pluginPanel.save();
 				}
 				else
 				{
 					JOptionPane.showMessageDialog(EntryPanel.this, "Acceptable file types: .wav", "Bad file", JOptionPane.ERROR_MESSAGE);
 					customSoundTextField.setText("");
+					playing.setText("No sound selected");
 				}
 			}
 		});
@@ -634,17 +658,9 @@ public class EntryPanel extends JPanel
 			@Override
 			public void actionPerformed(ActionEvent e)
 			{
-				if (getPlaying() == SoundOption.CUSTOM_SOUND)
-				{
-					pluginPanel.findCustomSound(getCustomSoundPath());
-				}
-				else
-				{
-					pluginPanel.playDefaultSound(pluginPanel.getDefaultSoundChoice(getPlaying()));
-				}
+				pluginPanel.findCustomSound(getCustomSoundPath());
 			}
 		});
-
 		log.debug("Created new entry panel");
 	}
 
@@ -715,11 +731,6 @@ public class EntryPanel extends JPanel
 		return (Condition) replacing.getSelectedItem();
 	}
 
-	public SoundOption getPlaying()
-	{
-		return (SoundOption) playing.getSelectedItem();
-	}
-
 	// Get the panel data in string form for simple storage
 	public String getWeaponIdString()
 	{
@@ -746,11 +757,6 @@ public class EntryPanel extends JPanel
 	public String getReplacingString()
 	{
 		return replacing.getSelectedItem().toString();
-	}
-
-	public String getPlayingString()
-	{
-		return playing.getSelectedItem().toString();
 	}
 
 	private void setWeaponIcons(BufferedImage image)
@@ -796,9 +802,9 @@ public class EntryPanel extends JPanel
 		replacing.setSelectedItem(replacingValue);
 	}
 
-	public void setPlaying(SoundOption playingValue)
+	public void setPlaying(String playingValue)
 	{
-		playing.setSelectedItem(playingValue);
+		playing.setText(playingValue);
 	}
 
 	public void makeSoundInputVisible()
@@ -810,5 +816,13 @@ public class EntryPanel extends JPanel
 	public void setCustomSoundPath(String customSoundPath)
 	{
 		customSoundTextField.setText(customSoundPath);
+		if (customSoundPath.length()>4){
+			if(customSoundPath.contains("\\")){
+				playing.setText(customSoundPath.substring(customSoundPath.lastIndexOf('\\')+1,customSoundPath.lastIndexOf('.')));
+			}
+			else {
+				playing.setText(customSoundPath.substring(customSoundPath.lastIndexOf('/')+1,customSoundPath.lastIndexOf('.')));
+			}
+		}
 	}
 }

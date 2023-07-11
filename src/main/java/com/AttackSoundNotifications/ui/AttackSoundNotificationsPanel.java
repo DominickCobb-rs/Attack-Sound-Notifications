@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2018, Kamiel, <https://github.com/Kamielvf>
  * Copyright (c) 2018, Psikoi <https://github.com/psikoi>
+ * Copyright (c) 2023, Jacob Browder <https://github.com/DominickCobb-rs>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -57,11 +58,6 @@ public class AttackSoundNotificationsPanel extends PluginPanel
 	private List<EntryPanel> entryPanelList = new ArrayList<>();
 
 	// Default Sound Files //
-	public static final String DEFAULT_MAX_FILE = "/audio/default_max.wav";
-	public static final String DEFAULT_MISS_FILE = "/audio/default_miss.wav";
-	public static final String DEFAULT_SPEC_MISS_FILE = "/audio/default_spec_miss.wav";
-	public static final String DEFAULT_SPEC_HIT_FILE = "/audio/default_spec_hit.wav";
-	public static final String DEFAULT_SPEC_MAX_FILE = "/audio/default_spec_max.wav";
 	public static final String FILE_NOT_FOUND = "/audio/file_not_found.wav";
 	////////////////////////
 
@@ -83,46 +79,13 @@ public class AttackSoundNotificationsPanel extends PluginPanel
 	private final AttackSoundNotificationsPlugin plugin;
 	private Boolean startup = false;
 
-	public enum SoundOption
-	{
-		SPECIAL_HIT("Default Special Hit Sound"), SPECIAL_MISS("Default Special Miss Sound"), SPECIAL_MAX("Default Special Max Sound"), MAX("Default Max Sound"), MISS("Default Miss Sound"), CUSTOM_SOUND("Custom sound"),
-		;
-
-		private String displayValue;
-
-		SoundOption(String displayValue)
-		{
-			this.displayValue = displayValue;
-		}
-
-		public String getDisplayValue()
-		{
-			return displayValue;
-		}
-
-		// This method can be used to get the enum from the string representation
-		public static SoundOption fromString(String displayValue)
-		{
-			for (SoundOption option : SoundOption.values())
-			{
-				if (option.displayValue.equalsIgnoreCase(displayValue))
-				{
-					return option;
-				}
-			}
-			return null;
-		}
-
-		@Override
-		public String toString()
-		{
-			return this.displayValue;
-		}
-	}
-
 	public enum Condition
 	{
-		SPECIAL_HIT("Special Attack Hit"), SPECIAL_MISS("Special Attack Miss"), SPECIAL_MAX("Special Attack Max"), MAX("Non-Special Max"), MISS("Non-Special Miss");
+		SPECIAL_HIT("Special Attack Hit"), 
+		SPECIAL_MISS("Special Attack Miss"), 
+		SPECIAL_MAX("Special Attack Max"), 
+		MAX("Non-Special Max"), 
+		MISS("Non-Special Miss");
 
 		private String displayValue;
 
@@ -255,14 +218,8 @@ public class AttackSoundNotificationsPanel extends PluginPanel
 						Condition replacing = Condition.fromString(panelState.getReplacing());
 						newPanel.setReplacing(replacing);
 					}
-					if (panelState.getPlaying() != null)
+					if (panelState.getCustomSoundPath() != null)
 					{
-						SoundOption playing = SoundOption.fromString(panelState.getPlaying());
-						newPanel.setPlaying(playing);
-						if (playing == SoundOption.CUSTOM_SOUND)
-						{
-							newPanel.makeSoundInputVisible();
-						}
 						newPanel.setCustomSoundPath(panelState.getCustomSoundPath());
 					}
 					entryPanelList.add(newPanel);
@@ -317,7 +274,6 @@ public class AttackSoundNotificationsPanel extends PluginPanel
 				log.debug("weaponId :" + panel.getWeaponId());
 				log.debug("audible  :" + panel.getAudible());
 				log.debug("soundPath:" + panel.getCustomSoundPath());
-				log.debug("playing  :" + panel.getPlaying());
 				log.debug("replacing:" + panel.getReplacing());
 				// Only special attacks
 				switch (panel.getReplacing())
@@ -329,29 +285,14 @@ public class AttackSoundNotificationsPanel extends PluginPanel
 						{
 							if (hitType == HitsplatID.BLOCK_ME)
 							{
-								if (panel.getPlaying() == SoundOption.CUSTOM_SOUND)
+								returnSound = loadCustomSound(panel.getCustomSoundPath());
+								if (returnSound != null)
 								{
-									returnSound = loadCustomSound(panel.getCustomSoundPath());
-									if (returnSound != null)
-									{
-										log.debug("Found custom sound");
-									}
-									else
-									{
-										plugin.client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "Couldn't find custom sound file:" + panel.getCustomSoundPath(), null);
-										if (plugin.config.cantFind())
-										{
-											returnSound = loadDefaultSound(DEFAULT_MISS_FILE);
-										}
-										else
-										{
-											returnSound = null;
-										}
-									}
+									log.debug("Found custom sound");
 								}
 								else
 								{
-									returnSound = getDefaultSoundChoice(panel.getPlaying());
+									plugin.client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "Couldn't find custom sound file:" + panel.getCustomSoundPath(), null);
 								}
 								return returnSound;
 							}
@@ -365,29 +306,16 @@ public class AttackSoundNotificationsPanel extends PluginPanel
 							log.debug("Max is being replaced");
 							if (hitType == HitsplatID.DAMAGE_MAX_ME)
 							{
-								if (panel.getPlaying() == SoundOption.CUSTOM_SOUND)
+								
+								returnSound = loadCustomSound(panel.getCustomSoundPath());
+								if (returnSound != null)
 								{
-									returnSound = loadCustomSound(panel.getCustomSoundPath());
-									if (returnSound != null)
-									{
-										log.debug("Found custom sound");
-									}
-									else
-									{
-										plugin.client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "Couldn't find custom sound file:" + panel.getCustomSoundPath(), null);
-										if (plugin.config.cantFind())
-										{
-											returnSound = loadDefaultSound(DEFAULT_SPEC_MAX_FILE);
-										}
-										else
-										{
-											returnSound = null;
-										}
-									}
+									log.debug("Found custom sound");
 								}
 								else
 								{
-									returnSound = getDefaultSoundChoice(panel.getPlaying());
+									plugin.client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "Couldn't find custom sound file:" + panel.getCustomSoundPath(), null);
+									
 								}
 								return returnSound;
 							}
@@ -400,29 +328,14 @@ public class AttackSoundNotificationsPanel extends PluginPanel
 						{
 							if (hitType == HitsplatID.BLOCK_ME)
 							{
-								if (panel.getPlaying() == SoundOption.CUSTOM_SOUND)
+								returnSound = loadCustomSound(panel.getCustomSoundPath());
+								if (returnSound != null)
 								{
-									returnSound = loadCustomSound(panel.getCustomSoundPath());
-									if (returnSound != null)
-									{
-										log.debug("Found custom sound");
-									}
-									else
-									{
-										plugin.client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "Couldn't find custom sound file:" + panel.getCustomSoundPath(), null);
-										if (plugin.config.cantFind())
-										{
-											returnSound = loadDefaultSound(DEFAULT_SPEC_MISS_FILE);
-										}
-										else
-										{
-											returnSound = null;
-										}
-									}
+									log.debug("Found custom sound");
 								}
 								else
 								{
-									returnSound = getDefaultSoundChoice(panel.getPlaying());
+									plugin.client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "Couldn't find custom sound file:" + panel.getCustomSoundPath(), null);
 								}
 								return returnSound;
 							}
@@ -436,29 +349,14 @@ public class AttackSoundNotificationsPanel extends PluginPanel
 						{
 							if (hitType == HitsplatID.DAMAGE_ME)
 							{
-								if (panel.getPlaying() == SoundOption.CUSTOM_SOUND)
+								returnSound = loadCustomSound(panel.getCustomSoundPath());
+								if (returnSound != null)
 								{
-									returnSound = loadCustomSound(panel.getCustomSoundPath());
-									if (returnSound != null)
-									{
-										log.debug("Found custom sound");
-									}
-									else
-									{
-										plugin.client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "Couldn't find custom sound file:" + panel.getCustomSoundPath(), null);
-										if (plugin.config.cantFind())
-										{
-											returnSound = loadDefaultSound(DEFAULT_SPEC_HIT_FILE);
-										}
-										else
-										{
-											returnSound = null;
-										}
-									}
+									log.debug("Found custom sound");
 								}
 								else
 								{
-									returnSound = getDefaultSoundChoice(panel.getPlaying());
+									plugin.client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "Couldn't find custom sound file:" + panel.getCustomSoundPath(), null);
 								}
 								return returnSound;
 							}
@@ -471,29 +369,14 @@ public class AttackSoundNotificationsPanel extends PluginPanel
 						{
 							if (hitType == HitsplatID.DAMAGE_MAX_ME)
 							{
-								if (panel.getPlaying() == SoundOption.CUSTOM_SOUND)
+								returnSound = loadCustomSound(panel.getCustomSoundPath());
+								if (returnSound != null)
 								{
-									returnSound = loadCustomSound(panel.getCustomSoundPath());
-									if (returnSound != null)
-									{
-										log.debug("Found custom sound");
-									}
-									else
-									{
-										plugin.client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "Couldn't find custom sound file:" + panel.getCustomSoundPath(), null);
-										if (plugin.config.cantFind())
-										{
-											returnSound = loadDefaultSound(DEFAULT_SPEC_MAX_FILE);
-										}
-										else
-										{
-											returnSound = null;
-										}
-									}
+									log.debug("Found custom sound");
 								}
 								else
 								{
-									returnSound = getDefaultSoundChoice(panel.getPlaying());
+									plugin.client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "Couldn't find custom sound file:" + panel.getCustomSoundPath(), null);
 								}
 								return returnSound;
 							}
@@ -508,49 +391,10 @@ public class AttackSoundNotificationsPanel extends PluginPanel
 				log.debug("weaponId :" + panel.getWeaponId());
 				log.debug("audible  :" + panel.getAudible());
 				log.debug("soundPath:" + panel.getCustomSoundPath());
-				log.debug("playing  :" + panel.getPlaying());
 				log.debug("replacing:" + panel.getReplacing());
 			}
 		}
 		return null;
-	}
-
-	public InputStream getDefaultSoundChoice(SoundOption choice)
-	{
-		switch (choice)
-		{
-			case SPECIAL_HIT:
-			{
-				return loadDefaultSound(DEFAULT_SPEC_HIT_FILE);
-			}
-			case SPECIAL_MAX:
-			{
-				return loadDefaultSound(DEFAULT_SPEC_MAX_FILE);
-			}
-			case SPECIAL_MISS:
-			{
-				return loadDefaultSound(DEFAULT_SPEC_MISS_FILE);
-			}
-			case MISS:
-			{
-				return loadDefaultSound(DEFAULT_MISS_FILE);
-			}
-			case MAX:
-			{
-				return loadDefaultSound(DEFAULT_MAX_FILE);
-			}
-			case CUSTOM_SOUND:
-			{
-				log.warn("How did you even get here? This shouldn't happen");
-				return loadDefaultSound(FILE_NOT_FOUND);
-			}
-		}
-		return null;
-	}
-
-	public InputStream loadDefaultSound(String filePath)
-	{
-		return AttackSoundNotificationsPlugin.class.getResourceAsStream(filePath);
 	}
 
 	private BufferedInputStream loadCustomSound(String fileName)
@@ -574,7 +418,7 @@ public class AttackSoundNotificationsPanel extends PluginPanel
 		}
 		else
 		{
-			plugin.playCustomSound(loadDefaultSound(FILE_NOT_FOUND));
+			plugin.playCustomSound(AttackSoundNotificationsPlugin.class.getResourceAsStream(FILE_NOT_FOUND));
 		}
 	}
 

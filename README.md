@@ -10,7 +10,7 @@
 Well this plugin may be of use to you then. You have the option to toggle notification sounds in the event those things happen!
 
 ## Custom Audio
-Default audio is packed into the repo for the 5 times audio can be played.
+A singular default audio file is included to indicate when your custom sound cannot be found. No other sounds are included to avoid copyright infringement.
 
 To use custom audio:
 1. Create a .wav file
