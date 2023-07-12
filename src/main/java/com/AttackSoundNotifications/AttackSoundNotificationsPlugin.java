@@ -29,27 +29,29 @@
 package com.AttackSoundNotifications;
 
 import com.AttackSoundNotifications.ui.AttackSoundNotificationsPanel;
-import net.runelite.client.ui.NavigationButton;
-import net.runelite.client.ui.ClientToolbar;
-import net.runelite.client.plugins.Plugin;
-import net.runelite.client.plugins.PluginDescriptor;
-
 import com.google.gson.Gson;
 import com.google.inject.Provides;
-
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.io.InputStream;
 import javax.imageio.ImageIO;
 import javax.inject.Inject;
-
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
+import javax.sound.sampled.FloatControl;
+import javax.sound.sampled.LineUnavailableException;
+import javax.sound.sampled.UnsupportedAudioFileException;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Actor;
 import net.runelite.api.Client;
 import net.runelite.api.EquipmentInventorySlot;
-import net.runelite.api.events.HitsplatApplied;
 import net.runelite.api.Hitsplat;
 import net.runelite.api.InventoryID;
 import net.runelite.api.Item;
 import net.runelite.api.ItemContainer;
 import net.runelite.api.VarPlayer;
+import net.runelite.api.events.HitsplatApplied;
 import net.runelite.api.events.VarbitChanged;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
@@ -58,11 +60,10 @@ import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.SpriteManager;
 import net.runelite.client.game.chatbox.ChatboxItemSearch;
 import net.runelite.client.game.chatbox.ChatboxPanelManager;
-
-import javax.sound.sampled.*;
-
-import java.awt.image.BufferedImage;
-import java.io.*;
+import net.runelite.client.plugins.Plugin;
+import net.runelite.client.plugins.PluginDescriptor;
+import net.runelite.client.ui.ClientToolbar;
+import net.runelite.client.ui.NavigationButton;
 
 @Slf4j
 @PluginDescriptor(name = "Attack Sound Notifications", description = "A plugin that plays sounds based on hitsplats and special attacks", tags = {
@@ -107,18 +108,6 @@ public class AttackSoundNotificationsPlugin extends Plugin
 	private int specialPercentage;
 	private int specialWeapon;
 	private boolean specced = false;
-	/*
-	 * Probably don't need hitsplatTick for our purposes, we're doing dummy work not
-	 * calculations
-	 * // This is from SpecialAttackCounter
-	 * // expected tick the hitsplat will happen on
-	 * // private int hitsplatTick;
-	 * // private NPC lastSpecTarget;
-	 */
-
-	// This should only ever be the hitsplat the player applies to another creature
-	// most recent hitsplat and the target it was on
-	private Hitsplat lastSpecHitsplat;
 	private InputStream soundToPlay;
 
 	@Provides
@@ -186,16 +175,10 @@ public class AttackSoundNotificationsPlugin extends Plugin
 					if (weapon != null)
 					{
 						specialWeapon = weapon.getId();
-						log.debug("Set specialWeapon to " + specialWeapon);
-					}
-					else
-					{
-						specialWeapon = -1;
 					}
 				}
 			}
 			specced = true;
-			log.debug("Set specced to true");
 		});
 	}
 
@@ -206,8 +189,9 @@ public class AttackSoundNotificationsPlugin extends Plugin
 		Hitsplat hitsplat = hitsplatApplied.getHitsplat();
 		if (hitsplat.isMine() && target != client.getLocalPlayer())
 		{
-			log.debug("Fetching weaponId");
 			// Adapted from the SpecialAttackSounds plugin
+			// Could already be assigned from the spec varbit change so we check
+			// if it's already been assigned a value
 			if (specialWeapon == -1)
 			{
 				ItemContainer equipment = client.getItemContainer(InventoryID.EQUIPMENT);
@@ -217,26 +201,17 @@ public class AttackSoundNotificationsPlugin extends Plugin
 					if (weapon != null)
 					{
 						specialWeapon = weapon.getId();
-						log.debug("Found weaponId " + specialWeapon);
-						int hitType = lastSpecHitsplat.getHitsplatType();
-						log.debug("Fetching sound with the following... hitType: " + hitType + " Weapon:" + specialWeapon
-							+ "specced: " + specced);
-						soundToPlay = pluginPanel.fetchSound(hitType, specialWeapon, specced);
-						if (soundToPlay == null)
-						{
-							log.debug("No sound fetched");
-						}
-						if (soundToPlay != null)
-						{
-							playCustomSound(soundToPlay);
-							soundToPlay = null;
-						}
-						specialWeapon = -1;
-						lastSpecHitsplat = null;
-						specced = false;
 					}
 				}
 			}
+			soundToPlay = pluginPanel.fetchSound(hitsplat.getHitsplatType(), specialWeapon, specced);
+			if (soundToPlay != null)
+			{
+				playCustomSound(soundToPlay);
+				soundToPlay = null;
+			}
+			specialWeapon = -1;
+			specced = false;
 		}
 	}
 

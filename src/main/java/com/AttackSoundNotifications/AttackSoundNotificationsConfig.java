@@ -17,10 +17,14 @@ public interface AttackSoundNotificationsConfig extends Config
 		return 25;
 	}
 
-	@ConfigItem(keyName = "cantFind", name = "Play fallback sounds", description = "If your custom audio file can't be found, play the default", position = 2)
-	default boolean cantFind()
+	@ConfigItem(keyName = "help", name = "Help", description = "Panel Help", position = 2, warning = "Reset this field if you accidentally remove it.")
+	default String help()
 	{
-		return true;
+		return "When you use the plugin panel " +
+			"the default weapon is ALL weapons (-1). " +
+			"If you don't select a weapon, it will " +
+			"play the sound for any weapon you hit with. " +
+			"Otherwise it will play only for the weapon you select";
 	}
 
 	// Instructions to add custom sounds

@@ -55,28 +55,46 @@ package com.AttackSoundNotifications.ui;
 
 import com.AttackSoundNotifications.AttackSoundNotificationsPlugin;
 import com.AttackSoundNotifications.ui.AttackSoundNotificationsPanel.Condition;
-
-import net.runelite.api.GameState;
-import net.runelite.client.ui.ColorScheme;
-import net.runelite.client.ui.FontManager;
-import net.runelite.client.ui.components.FlatTextField;
-import net.runelite.client.util.ImageUtil;
-import javax.swing.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import javax.swing.BorderFactory;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.SwingConstants;
 import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.MatteBorder;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import java.awt.*;
-import java.awt.event.*;
-import java.awt.image.BufferedImage;
-import java.io.File;
 import lombok.extern.slf4j.Slf4j;
+import net.runelite.api.GameState;
+import net.runelite.client.ui.ColorScheme;
+import net.runelite.client.ui.FontManager;
+import net.runelite.client.ui.components.FlatTextField;
+import net.runelite.client.util.ImageUtil;
 
 @Slf4j
 public class EntryPanel extends JPanel
 {
-	private JPanel mainPanel;
+	private final JPanel mainPanel;
 	private Integer weaponId = -1;
 	private ImageIcon weaponIcon;
 	private final AttackSoundNotificationsPanel pluginPanel;
@@ -101,15 +119,15 @@ public class EntryPanel extends JPanel
 	private final JPanel buttons = new JPanel(new BorderLayout());
 
 	// Data fields //
-	private JLabel weaponLabel = new JLabel();
-	private JLabel removeEntry = new JLabel();
-	private JLabel audible = new JLabel();
-	private JTextField customSoundTextField = new JTextField();
-	private JLabel selectFile = new JLabel();
-	private JButton testSound = new JButton("Play the sound");
-	private JComboBox<Condition> replacing = new JComboBox<>(new DefaultComboBoxModel<>(Condition.values()));
-	private FlatTextField playing = new FlatTextField();
-	private JLabel clearPlaying = new JLabel();
+	private final JLabel weaponLabel = new JLabel();
+	private final JLabel removeEntry = new JLabel();
+	private final JLabel audible = new JLabel();
+	private final JTextField customSoundTextField = new JTextField();
+	private final JLabel selectFile = new JLabel();
+	private final JButton testSound = new JButton("Play the sound");
+	private final JComboBox<Condition> replacing = new JComboBox<>(new DefaultComboBoxModel<>(Condition.values()));
+	private final JLabel playing = new JLabel();
+	private final JLabel clearPlaying = new JLabel();
 	/////////////////
 
 	// Not my stuff - From the ScreenMarkerPluginPanel //
@@ -141,8 +159,9 @@ public class EntryPanel extends JPanel
 		AUDIBLE_HOVER_ICON = new ImageIcon(ImageUtil.alphaOffset(audibleImg, -100));
 
 		final BufferedImage inaudibleImg = ImageUtil.loadImageResource(AttackSoundNotificationsPlugin.class, "/icons/off.png");
-		INAUDIBLE_ICON = new ImageIcon(inaudibleImg);
-		INAUDIBLE_HOVER_ICON = new ImageIcon(ImageUtil.alphaOffset(inaudibleImg, -100));
+		// Flipped because we want the hover to be brighter
+		INAUDIBLE_HOVER_ICON = new ImageIcon(inaudibleImg);
+		INAUDIBLE_ICON = new ImageIcon(ImageUtil.alphaOffset(inaudibleImg, -100));
 
 		final BufferedImage removeImg = ImageUtil.loadImageResource(AttackSoundNotificationsPlugin.class, "/icons/delete.png");
 		REMOVE_ICON = new ImageIcon(removeImg);
@@ -178,12 +197,12 @@ public class EntryPanel extends JPanel
 		replacing.setToolTipText("When to play the sound");
 
 		playing.setFocusable(false);
-		playing.setEditable(false);
 		playing.setToolTipText("What sound to play");
 		playing.setText("No sound selected");
 		playing.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		playing.getTextField().setForeground(Color.WHITE);
-		playing.getTextField().setHorizontalAlignment(JTextField.CENTER);
+		playing.setForeground(Color.WHITE);
+		playing.setHorizontalAlignment(JTextField.CENTER);
+		playing.setBorder(new EmptyBorder(0,4,0,4));
 
 		clearPlaying.setIcon(REMOVE_ICON);
 		clearPlaying.setToolTipText("Clear the custom sound path");
@@ -229,8 +248,8 @@ public class EntryPanel extends JPanel
 					setWeaponIcons(DEFAULT_WEAPON_ICON);
 					weaponId = -1;
 					replacing.setSelectedIndex(0);
-					playing.setText("");
-					textEntry.setVisible(false);
+					playing.setToolTipText("No sound selected");
+					playing.setText("No sound selected");
 					pluginPanel.save();
 				}
 			}
@@ -455,7 +474,6 @@ public class EntryPanel extends JPanel
 					else
 					{
 						weaponId = itemId;
-						log.debug("Found itemId: " + weaponId);
 						setWeaponIcons(plugin.itemManager.getImage(weaponId, 0, false));
 						pluginPanel.save();
 					}
@@ -534,7 +552,7 @@ public class EntryPanel extends JPanel
 						return; // If user doesn't confirm, we do nothing more
 					}
 				}
-				EntryPanel.this.removeSelf();
+				pluginPanel.removeEntryPanel(EntryPanel.this);
 				pluginPanel.entryPanel.remove(mainPanel);
 				pluginPanel.reloadPanels();
 			}
@@ -576,6 +594,7 @@ public class EntryPanel extends JPanel
 					}
 				}
 				playing.setText("No sound selected");
+				playing.setToolTipText("No sound selected");
 				customSoundTextField.setText("");
 				save();
 			}
@@ -602,7 +621,19 @@ public class EntryPanel extends JPanel
 				{
 					String text = customSoundTextField.getText();
 					pluginPanel.requestFocusInWindow();
-					playing.setText(text.substring(text.lastIndexOf('/')+1,text.lastIndexOf('.')));
+					if (text.contains("\\"))
+					{
+						String newString = text.substring(text.lastIndexOf('\\') + 1, text.lastIndexOf('.'));
+						playing.setText(newString);
+						playing.setToolTipText(newString);
+					}
+					else
+					{
+						String newString = text.substring(text.lastIndexOf('/') + 1, text.lastIndexOf('.'));
+						playing.setText(newString);
+						playing.setToolTipText(newString);
+					}
+
 					pluginPanel.save();
 				}
 				else
@@ -630,6 +661,19 @@ public class EntryPanel extends JPanel
 					if (filePath.endsWith(".wav"))
 					{
 						customSoundTextField.setText(filePath);
+						pluginPanel.requestFocusInWindow();
+						if (filePath.contains("\\"))
+						{
+							String newString = filePath.substring(filePath.lastIndexOf('\\') + 1, filePath.lastIndexOf('.'));
+							playing.setText(newString);
+							playing.setToolTipText(newString);
+						}
+						else
+						{
+							String newString = filePath.substring(filePath.lastIndexOf('/') + 1, filePath.lastIndexOf('.'));
+							playing.setText(newString);
+							playing.setToolTipText(newString);
+						}
 						pluginPanel.save();
 					}
 					else
@@ -661,7 +705,6 @@ public class EntryPanel extends JPanel
 				pluginPanel.findCustomSound(getCustomSoundPath());
 			}
 		});
-		log.debug("Created new entry panel");
 	}
 
 	// ALSO NOT MINE //
@@ -702,12 +745,6 @@ public class EntryPanel extends JPanel
 		return mainPanel;
 	}
 
-	// Remove the panel from everything
-	public void removeSelf()
-	{
-		pluginPanel.removeEntryPanel(this);
-	}
-
 	// Get the panel data, for sound selection purposes //
 	public int getWeaponId()
 	{
@@ -716,14 +753,7 @@ public class EntryPanel extends JPanel
 
 	public boolean getAudible()
 	{
-		if (audible.getIcon() == AUDIBLE_ICON || audible.getIcon() == AUDIBLE_HOVER_ICON)
-		{
-			return true;
-		}
-		else
-		{
-			return false;
-		}
+		return audible.getIcon() == AUDIBLE_ICON || audible.getIcon() == AUDIBLE_HOVER_ICON;
 	}
 
 	public Condition getReplacing()
@@ -816,12 +846,17 @@ public class EntryPanel extends JPanel
 	public void setCustomSoundPath(String customSoundPath)
 	{
 		customSoundTextField.setText(customSoundPath);
-		if (customSoundPath.length()>4){
-			if(customSoundPath.contains("\\")){
-				playing.setText(customSoundPath.substring(customSoundPath.lastIndexOf('\\')+1,customSoundPath.lastIndexOf('.')));
+		// for some reason the sound path will be empty and yet it will say it's non-null.
+		// checking if it is >4 maybe ensures the '.wav' exists
+		if (customSoundPath.length() > 4)
+		{
+			if (customSoundPath.contains("\\"))
+			{
+				playing.setText(customSoundPath.substring(customSoundPath.lastIndexOf('\\') + 1, customSoundPath.lastIndexOf('.')));
 			}
-			else {
-				playing.setText(customSoundPath.substring(customSoundPath.lastIndexOf('/')+1,customSoundPath.lastIndexOf('.')));
+			else
+			{
+				playing.setText(customSoundPath.substring(customSoundPath.lastIndexOf('/') + 1, customSoundPath.lastIndexOf('.')));
 			}
 		}
 	}

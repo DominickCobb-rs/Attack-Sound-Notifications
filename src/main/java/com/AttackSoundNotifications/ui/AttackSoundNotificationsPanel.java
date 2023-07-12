@@ -28,38 +28,39 @@
 
 package com.AttackSoundNotifications.ui;
 
-import com.google.gson.reflect.TypeToken;
 import com.AttackSoundNotifications.AttackSoundNotificationsPlugin;
 import static com.AttackSoundNotifications.AttackSoundNotificationsPlugin.CONFIG_GROUP;
 import static com.AttackSoundNotifications.AttackSoundNotificationsPlugin.PANEL_PREFIX;
+import com.google.gson.reflect.TypeToken;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
+import java.io.BufferedInputStream;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.swing.ImageIcon;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.border.EmptyBorder;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.HitsplatID;
 import net.runelite.client.ui.PluginPanel;
 import net.runelite.client.util.ImageUtil;
-import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import javax.inject.Inject;
-import java.awt.*;
-import java.awt.event.*;
-import java.awt.image.BufferedImage;
-import java.io.InputStream;
-import java.io.BufferedInputStream;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 public class AttackSoundNotificationsPanel extends PluginPanel
 {
 	private InputStream returnSound;
-	private List<EntryPanel> entryPanelList = new ArrayList<>();
-
-	// Default Sound Files //
-	public static final String FILE_NOT_FOUND = "/audio/file_not_found.wav";
-	////////////////////////
+	private final List<EntryPanel> entryPanelList = new ArrayList<>();
 
 	// Panel Construction //
 	private static final ImageIcon ADD_ICON;
@@ -74,20 +75,15 @@ public class AttackSoundNotificationsPanel extends PluginPanel
 		ADD_ICON = new ImageIcon(addIcon);
 		ADD_HOVER_ICON = new ImageIcon(ImageUtil.alphaOffset(addIcon, 0.53f));
 	}
-	////////////////////////
 
 	private final AttackSoundNotificationsPlugin plugin;
 	private Boolean startup = false;
 
 	public enum Condition
 	{
-		SPECIAL_HIT("Special Attack Hit"), 
-		SPECIAL_MISS("Special Attack Miss"), 
-		SPECIAL_MAX("Special Attack Max"), 
-		MAX("Non-Special Max"), 
-		MISS("Non-Special Miss");
+		SPECIAL_HIT("Special Attack Hit"), SPECIAL_MISS("Special Attack Miss"), SPECIAL_MAX("Special Attack Max"), MAX("Non-Special Max"), MISS("Non-Special Miss");
 
-		private String displayValue;
+		private final String displayValue;
 
 		Condition(String displayValue)
 		{
@@ -99,7 +95,6 @@ public class AttackSoundNotificationsPanel extends PluginPanel
 			return displayValue;
 		}
 
-		// This method can be used to get the enum from the string representation
 		public static Condition fromString(String displayValue)
 		{
 			for (Condition option : Condition.values())
@@ -133,9 +128,9 @@ public class AttackSoundNotificationsPanel extends PluginPanel
 
 		northPanel.add(title, BorderLayout.WEST);
 		northPanel.add(addSound, BorderLayout.EAST);
-
+		
 		add(northPanel, BorderLayout.NORTH);
-		add(entryPanel, BorderLayout.CENTER);
+		add(entryPanel, BorderLayout.SOUTH);
 
 		addSound.setToolTipText("Add new sound");
 		addSound.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -165,8 +160,7 @@ public class AttackSoundNotificationsPanel extends PluginPanel
 
 	public void reloadPanels()
 	{
-		plugin.clientThread.invokeLater(() ->
-		{
+		plugin.clientThread.invokeLater(() -> {
 			this.revalidate();
 			this.repaint();
 		});
@@ -176,9 +170,8 @@ public class AttackSoundNotificationsPanel extends PluginPanel
 	{
 		GridBagConstraints entryConstraints = new GridBagConstraints();
 		entryConstraints.gridx = 0;
-		entryConstraints.gridy = entryPanel.getComponentCount() + 1;
 		entryConstraints.weightx = 1;
-		entryConstraints.fill = GridBagConstraints.NONE;
+		entryConstraints.fill = GridBagConstraints.HORIZONTAL;
 		entryConstraints.anchor = GridBagConstraints.NORTH;
 
 		EntryPanel newEntryPanel = new EntryPanel(this, plugin);
@@ -193,16 +186,17 @@ public class AttackSoundNotificationsPanel extends PluginPanel
 	private void loadEntryPanels(JPanel parentPanel)
 	{
 		startup = true;
-		List<EntryPanelState> panelStates = plugin.gson.fromJson(plugin.configManager.getConfiguration(CONFIG_GROUP, PANEL_PREFIX), new TypeToken<List<EntryPanelState>>()
-		{
-		}.getType());
+		List<EntryPanelState> panelStates = plugin.gson.fromJson(
+			plugin.configManager.getConfiguration(CONFIG_GROUP, PANEL_PREFIX
+			), new TypeToken<List<EntryPanelState>>()
+			{
+			}.getType());
 		if (panelStates != null)
 		{
 			for (EntryPanelState panelState : panelStates)
 			{
 				if (panelState.getPanelName() != null)
 				{
-					log.debug("Found panel " + panelState.getPanelName());
 					EntryPanel newPanel = new EntryPanel(this, plugin);
 					newPanel.setPanelName(panelState.getPanelName());
 					if (panelState.getWeaponId() != null)
@@ -225,19 +219,14 @@ public class AttackSoundNotificationsPanel extends PluginPanel
 					entryPanelList.add(newPanel);
 					GridBagConstraints entryConstraints = new GridBagConstraints();
 					entryConstraints.gridx = 0;
-					entryConstraints.gridy = parentPanel.getComponentCount() + 1;
 					entryConstraints.weightx = 1;
-					entryConstraints.fill = GridBagConstraints.NONE;
-					entryConstraints.anchor = GridBagConstraints.NORTH;
+					entryConstraints.fill = GridBagConstraints.HORIZONTAL;
+					entryConstraints.anchor = GridBagConstraints.NORTHWEST;
 					parentPanel.add(newPanel.getMainPanel(), entryConstraints);
 				}
 
 			}
 			startup = false;
-		}
-		else
-		{
-			log.debug("Found no panels");
 		}
 	}
 
@@ -245,10 +234,8 @@ public class AttackSoundNotificationsPanel extends PluginPanel
 	{
 		if (!startup)
 		{
-			log.debug("Saving");
 			List<EntryPanelState> panelStates = entryPanelList.stream().map(EntryPanelState::new).collect(Collectors.toList());
 			plugin.configManager.setConfiguration(CONFIG_GROUP, PANEL_PREFIX, plugin.gson.toJson(panelStates));
-			log.debug("Wrote " + plugin.gson.toJson(panelStates) + "to " + CONFIG_GROUP + " " + PANEL_PREFIX);
 		}
 
 	}
@@ -262,23 +249,12 @@ public class AttackSoundNotificationsPanel extends PluginPanel
 	// Sounds! //
 	public InputStream fetchSound(Integer hitType, Integer weaponId, Boolean usedSpecialAttack)
 	{
-		log.debug("Total panels: " + entryPanelList.size());
 		for (EntryPanel panel : entryPanelList)
 		{
-			// If it's the weaponID
-			if ((weaponId == panel.getWeaponId() && panel.getAudible()) || panel.getWeaponId() == -1)
+			if ((weaponId == panel.getWeaponId() || panel.getWeaponId() == -1) && panel.getAudible() && !panel.getCustomSoundPath().isEmpty())
 			{
-				log.debug("Found weapon in panels");
-				log.debug("Skipping panel...");
-				log.debug("name :" + panel.getName());
-				log.debug("weaponId :" + panel.getWeaponId());
-				log.debug("audible  :" + panel.getAudible());
-				log.debug("soundPath:" + panel.getCustomSoundPath());
-				log.debug("replacing:" + panel.getReplacing());
-				// Only special attacks
 				switch (panel.getReplacing())
 				{
-					// Spec Missed
 					case MISS:
 					{
 						if (!usedSpecialAttack)
@@ -286,11 +262,7 @@ public class AttackSoundNotificationsPanel extends PluginPanel
 							if (hitType == HitsplatID.BLOCK_ME)
 							{
 								returnSound = loadCustomSound(panel.getCustomSoundPath());
-								if (returnSound != null)
-								{
-									log.debug("Found custom sound");
-								}
-								else
+								if (returnSound == null)
 								{
 									plugin.client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "Couldn't find custom sound file:" + panel.getCustomSoundPath(), null);
 								}
@@ -303,19 +275,12 @@ public class AttackSoundNotificationsPanel extends PluginPanel
 					{
 						if (!usedSpecialAttack)
 						{
-							log.debug("Max is being replaced");
 							if (hitType == HitsplatID.DAMAGE_MAX_ME)
 							{
-								
 								returnSound = loadCustomSound(panel.getCustomSoundPath());
-								if (returnSound != null)
-								{
-									log.debug("Found custom sound");
-								}
-								else
+								if (returnSound == null)
 								{
 									plugin.client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "Couldn't find custom sound file:" + panel.getCustomSoundPath(), null);
-									
 								}
 								return returnSound;
 							}
@@ -329,11 +294,7 @@ public class AttackSoundNotificationsPanel extends PluginPanel
 							if (hitType == HitsplatID.BLOCK_ME)
 							{
 								returnSound = loadCustomSound(panel.getCustomSoundPath());
-								if (returnSound != null)
-								{
-									log.debug("Found custom sound");
-								}
-								else
+								if (returnSound == null)
 								{
 									plugin.client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "Couldn't find custom sound file:" + panel.getCustomSoundPath(), null);
 								}
@@ -342,7 +303,6 @@ public class AttackSoundNotificationsPanel extends PluginPanel
 						}
 					}
 					break;
-
 					case SPECIAL_HIT:
 					{
 						if (usedSpecialAttack)
@@ -350,11 +310,7 @@ public class AttackSoundNotificationsPanel extends PluginPanel
 							if (hitType == HitsplatID.DAMAGE_ME)
 							{
 								returnSound = loadCustomSound(panel.getCustomSoundPath());
-								if (returnSound != null)
-								{
-									log.debug("Found custom sound");
-								}
-								else
+								if (returnSound == null)
 								{
 									plugin.client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "Couldn't find custom sound file:" + panel.getCustomSoundPath(), null);
 								}
@@ -370,11 +326,7 @@ public class AttackSoundNotificationsPanel extends PluginPanel
 							if (hitType == HitsplatID.DAMAGE_MAX_ME)
 							{
 								returnSound = loadCustomSound(panel.getCustomSoundPath());
-								if (returnSound != null)
-								{
-									log.debug("Found custom sound");
-								}
-								else
+								if (returnSound == null)
 								{
 									plugin.client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "Couldn't find custom sound file:" + panel.getCustomSoundPath(), null);
 								}
@@ -383,15 +335,6 @@ public class AttackSoundNotificationsPanel extends PluginPanel
 						}
 					}
 				}
-			}
-			else
-			{
-				log.debug("Skipping panel...");
-				log.debug("name :" + panel.getName());
-				log.debug("weaponId :" + panel.getWeaponId());
-				log.debug("audible  :" + panel.getAudible());
-				log.debug("soundPath:" + panel.getCustomSoundPath());
-				log.debug("replacing:" + panel.getReplacing());
 			}
 		}
 		return null;
@@ -418,7 +361,8 @@ public class AttackSoundNotificationsPanel extends PluginPanel
 		}
 		else
 		{
-			plugin.playCustomSound(AttackSoundNotificationsPlugin.class.getResourceAsStream(FILE_NOT_FOUND));
+            // Plays the system default system oops noise
+			java.awt.Toolkit.getDefaultToolkit().beep();
 		}
 	}
 
