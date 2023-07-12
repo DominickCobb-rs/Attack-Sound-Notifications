@@ -27,7 +27,7 @@
 /*
  * Copyright (c) 2018, Tomas Slusny <slusnucky@gmail.com>
  * Copyright (c) 2018, Ron Young <https://github.com/raiyni>
- * Copyright (c) 2023, Jacob Browder <https://github.com/DominickCobb-rs>
+ * Copyright (c) 2023, DominickCobb-rs <https://github.com/DominickCobb-rs>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
