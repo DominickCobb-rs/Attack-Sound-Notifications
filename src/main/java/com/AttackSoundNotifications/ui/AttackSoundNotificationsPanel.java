@@ -59,14 +59,12 @@ import net.runelite.client.util.ImageUtil;
 
 public class AttackSoundNotificationsPanel extends PluginPanel
 {
-	private InputStream returnSound;
 	private final List<EntryPanel> entryPanelList = new ArrayList<>();
 
 	// Panel Construction //
 	private static final ImageIcon ADD_ICON;
 	private static final ImageIcon ADD_HOVER_ICON;
 	private final JLabel addSound = new JLabel(ADD_ICON);
-	private final JLabel title = new JLabel();
 	public final JPanel entryPanel = new JPanel(new GridBagLayout());
 
 	static
@@ -88,11 +86,6 @@ public class AttackSoundNotificationsPanel extends PluginPanel
 		Condition(String displayValue)
 		{
 			this.displayValue = displayValue;
-		}
-
-		public String getDisplayValue()
-		{
-			return displayValue;
 		}
 
 		public static Condition fromString(String displayValue)
@@ -123,12 +116,13 @@ public class AttackSoundNotificationsPanel extends PluginPanel
 		JPanel northPanel = new JPanel(new BorderLayout());
 		northPanel.setBorder(new EmptyBorder(11, 10, 10, 10));
 
+		JLabel title = new JLabel();
 		title.setText("Attack Sound Notifications");
 		title.setForeground(Color.WHITE);
 
 		northPanel.add(title, BorderLayout.WEST);
 		northPanel.add(addSound, BorderLayout.EAST);
-		
+
 		add(northPanel, BorderLayout.NORTH);
 		add(entryPanel, BorderLayout.SOUTH);
 
@@ -253,6 +247,7 @@ public class AttackSoundNotificationsPanel extends PluginPanel
 		{
 			if ((weaponId == panel.getWeaponId() || panel.getWeaponId() == -1) && panel.getAudible() && !panel.getCustomSoundPath().isEmpty())
 			{
+				InputStream returnSound;
 				switch (panel.getReplacing())
 				{
 					case MISS:
@@ -361,13 +356,9 @@ public class AttackSoundNotificationsPanel extends PluginPanel
 		}
 		else
 		{
-            // Plays the system default system oops noise
+			// Plays the system default system oops noise
 			java.awt.Toolkit.getDefaultToolkit().beep();
 		}
 	}
 
-	public void playDefaultSound(InputStream sound)
-	{
-		plugin.playCustomSound(sound);
-	}
 }

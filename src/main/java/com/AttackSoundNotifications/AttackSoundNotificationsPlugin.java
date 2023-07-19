@@ -34,7 +34,6 @@ import com.google.inject.Provides;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
-import javax.imageio.ImageIO;
 import javax.inject.Inject;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
@@ -57,17 +56,17 @@ import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.game.ItemManager;
-import net.runelite.client.game.SpriteManager;
 import net.runelite.client.game.chatbox.ChatboxItemSearch;
 import net.runelite.client.game.chatbox.ChatboxPanelManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.NavigationButton;
+import net.runelite.client.util.ImageUtil;
 
 @Slf4j
 @PluginDescriptor(name = "Attack Sound Notifications", description = "A plugin that plays sounds based on hitsplats and special attacks", tags = {
-	"special", "sounds", "notifications"}, loadWhenOutdated = true, enabledByDefault = false)
+	"special", "sounds", "notifications"}, loadWhenOutdated = true, enabledByDefault = true)
 public class AttackSoundNotificationsPlugin extends Plugin
 {
 	public static final String CONFIG_GROUP = "attacknotifications";
@@ -91,9 +90,6 @@ public class AttackSoundNotificationsPlugin extends Plugin
 	public ChatboxPanelManager chatboxPanelManager;
 
 	@Inject
-	public SpriteManager spriteManager;
-
-	@Inject
 	public ItemManager itemManager;
 
 	@Inject
@@ -108,7 +104,6 @@ public class AttackSoundNotificationsPlugin extends Plugin
 	private int specialPercentage;
 	private int specialWeapon;
 	private boolean specced = false;
-	private InputStream soundToPlay;
 
 	@Provides
 	AttackSoundNotificationsConfig provideConfig(ConfigManager configManager)
@@ -120,7 +115,7 @@ public class AttackSoundNotificationsPlugin extends Plugin
 	protected void startUp() throws Exception
 	{
 		pluginPanel = new AttackSoundNotificationsPanel(this);
-		BufferedImage icon = ImageIO.read(getClass().getResourceAsStream("/icons/panelIcon.png"));
+		BufferedImage icon = ImageUtil.loadImageResource(getClass(),"/icons/panelIcon.png");
 		navButton = NavigationButton.builder()
 			.tooltip("Attack Sounds")
 			.icon(icon)
@@ -204,11 +199,10 @@ public class AttackSoundNotificationsPlugin extends Plugin
 					}
 				}
 			}
-			soundToPlay = pluginPanel.fetchSound(hitsplat.getHitsplatType(), specialWeapon, specced);
+			InputStream soundToPlay = pluginPanel.fetchSound(hitsplat.getHitsplatType(), specialWeapon, specced);
 			if (soundToPlay != null)
 			{
 				playCustomSound(soundToPlay);
-				soundToPlay = null;
 			}
 			specialWeapon = -1;
 			specced = false;
@@ -216,7 +210,7 @@ public class AttackSoundNotificationsPlugin extends Plugin
 	}
 
 	// The following two functions have been adapted from the Hit-Sounds plugin
-	public synchronized boolean playCustomSound(InputStream streamName)
+	public synchronized void playCustomSound(InputStream streamName)
 	{
 		if (clip != null)
 		{
@@ -234,11 +228,11 @@ public class AttackSoundNotificationsPlugin extends Plugin
 			catch (LineUnavailableException e)
 			{
 				log.warn("Unable to play sound", e);
-				return false;
+				return;
 			}
 			if (!tryLoadCustomSoundFile(streamName))
 			{
-				return false;
+				return;
 			}
 		}
 
@@ -249,7 +243,6 @@ public class AttackSoundNotificationsPlugin extends Plugin
 		volume.setValue(gain);
 
 		clip.start();
-		return true;
 	}
 
 	private boolean tryLoadCustomSoundFile(InputStream streamName)

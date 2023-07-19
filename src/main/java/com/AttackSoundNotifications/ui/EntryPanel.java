@@ -99,39 +99,19 @@ public class EntryPanel extends JPanel
 	private ImageIcon weaponIcon;
 	private final AttackSoundNotificationsPanel pluginPanel;
 	private final AttackSoundNotificationsPlugin plugin;
-	private final JPanel weaponIconPanel = new JPanel(new BorderLayout())
-	{
-		@Override
-		protected void paintComponent(Graphics g)
-		{
-			super.paintComponent(g);
-			ImageIcon image = new ImageIcon(ImageUtil.loadImageResource(AttackSoundNotificationsPlugin.class, "/icons/weapon_back.png"));
-			int x = (getWidth() - image.getIconWidth()) / 2;
-			int y = (getHeight() - image.getIconHeight()) / 2;
-			g.drawImage(image.getImage(), x, y, null);
-		}
-	};
-	private final JPanel chooserPanel = new JPanel(new BorderLayout());
-	private final JPanel removePanel = new JPanel(new BorderLayout());
-	private final JPanel topPanel = new JPanel(new BorderLayout());
-	private final JPanel iconPanel = new JPanel(new BorderLayout());
-	private final JPanel textEntry = new JPanel(new BorderLayout());
-	private final JPanel buttons = new JPanel(new BorderLayout());
+	private final JPanel textEntry;
 
 	// Data fields //
-	private final JLabel weaponLabel = new JLabel();
-	private final JLabel removeEntry = new JLabel();
-	private final JLabel audible = new JLabel();
-	private final JTextField customSoundTextField = new JTextField();
-	private final JLabel selectFile = new JLabel();
-	private final JButton testSound = new JButton("Play the sound");
-	private final JComboBox<Condition> replacing = new JComboBox<>(new DefaultComboBoxModel<>(Condition.values()));
-	private final JLabel playing = new JLabel();
-	private final JLabel clearPlaying = new JLabel();
+	private final JLabel weaponLabel;
+	private final JLabel removeEntry;
+	private final JLabel audible;
+	private final JTextField customSoundTextField;
+	private final JLabel selectFile;
+	private final JComboBox<Condition> replacing;
+	private final JLabel playing;
+	private final JLabel clearPlaying;
 	/////////////////
 
-	// Not my stuff - From the ScreenMarkerPluginPanel //
-	private final JPanel bottomContainer = new JPanel(new BorderLayout());
 	private final FlatTextField nameInput = new FlatTextField();
 	private final JLabel rename = new JLabel("Rename");
 	private final JLabel save = new JLabel("Save");
@@ -177,6 +157,7 @@ public class EntryPanel extends JPanel
 		WEAPON_BACKGROUND = new ImageIcon(weaponBackground);
 
 		DEFAULT_WEAPON_ICON = ImageUtil.loadImageResource(AttackSoundNotificationsPlugin.class, "/icons/panelIcon.png");
+
 		final BufferedImage searchIcon = ImageUtil.loadImageResource(AttackSoundNotificationsPlugin.class, "/icons/search.png");
 		DEFAULT_WEAPON_HOVER_ICON = new ImageIcon(searchIcon);
 	}
@@ -188,14 +169,20 @@ public class EntryPanel extends JPanel
 		plugin = passedPlugin;
 		this.setName("Custom Sound " + (pluginPanel.entryPanel.getComponentCount() + 1));
 
-		// Make default icons
+		weaponLabel = new JLabel();
+		weaponLabel.setHorizontalAlignment(SwingConstants.CENTER);
+		weaponLabel.setBorder(new EmptyBorder(2, 2, 2, 2));
+
 		setWeaponIcons(DEFAULT_WEAPON_ICON);
 
+		customSoundTextField = new JTextField();
 		customSoundTextField.setFocusable(true);
 
+		replacing = new JComboBox<>(new DefaultComboBoxModel<>(Condition.values()));
 		replacing.setFocusable(false);
 		replacing.setToolTipText("When to play the sound");
 
+		playing = new JLabel();
 		playing.setFocusable(false);
 		playing.setToolTipText("What sound to play");
 		playing.setText("No sound selected");
@@ -204,10 +191,12 @@ public class EntryPanel extends JPanel
 		playing.setHorizontalAlignment(JTextField.CENTER);
 		playing.setBorder(new EmptyBorder(0,4,0,4));
 
+		clearPlaying = new JLabel();
 		clearPlaying.setIcon(REMOVE_ICON);
 		clearPlaying.setToolTipText("Clear the custom sound path");
 		clearPlaying.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
+		JButton testSound = new JButton("Play the sound");
 		testSound.setFocusable(false);
 		testSound.setToolTipText("Play the selected sound, if it exists");
 
@@ -225,33 +214,29 @@ public class EntryPanel extends JPanel
 		reset.setFont(FontManager.getRunescapeSmallFont());
 		reset.setForeground(ColorScheme.LIGHT_GRAY_COLOR.darker());
 		reset.setHorizontalAlignment(SwingConstants.CENTER);
+		audible = new JLabel();
 		reset.addMouseListener(new MouseAdapter()
 		{
 			@Override
 			public void mousePressed(MouseEvent mouseEvent)
 			{
-				int confirm = -1;
 				boolean shiftHeld = mouseEvent.isShiftDown();
 				if (!shiftHeld)
 				{
-					confirm = JOptionPane.showConfirmDialog(EntryPanel.this, "Reset this sound swap?", "Confirm", JOptionPane.YES_NO_OPTION);
+					if(JOptionPane.showConfirmDialog(EntryPanel.this, "Reset this sound swap?", "Confirm", JOptionPane.YES_NO_OPTION)!=0)
+					{
+						return;
+					}
 				}
-				else
-				{
-					confirm = 0;
-				}
-				if (confirm == 0)
-				{
-					EntryPanel.this.setName("Custom Sound " + pluginPanel.entryPanel.getComponentCount());
-					nameInput.setText("Custom Sound " + pluginPanel.entryPanel.getComponentCount());
-					audible.setIcon(AUDIBLE_ICON);
-					setWeaponIcons(DEFAULT_WEAPON_ICON);
-					weaponId = -1;
-					replacing.setSelectedIndex(0);
-					playing.setToolTipText("No sound selected");
-					playing.setText("No sound selected");
-					pluginPanel.save();
-				}
+				EntryPanel.this.setName("Custom Sound " + pluginPanel.entryPanel.getComponentCount());
+				nameInput.setText("Custom Sound " + pluginPanel.entryPanel.getComponentCount());
+				audible.setIcon(AUDIBLE_ICON);
+				setWeaponIcons(DEFAULT_WEAPON_ICON);
+				weaponId = -1;
+				replacing.setSelectedIndex(0);
+				playing.setToolTipText("No sound selected");
+				playing.setText("No sound selected");
+				pluginPanel.save();
 			}
 
 			@Override
@@ -374,27 +359,40 @@ public class EntryPanel extends JPanel
 
 		resetOptions.add(reset, BorderLayout.CENTER);
 
-		removeEntry.setIcon(new ImageIcon(getClass().getResource("/icons/delete.png")));
+		removeEntry = new JLabel();
+		removeEntry.setIcon(new ImageIcon(ImageUtil.loadImageResource(AttackSoundNotificationsPlugin.class,"/icons/delete.png")));
 		removeEntry.setToolTipText("Remove this sound");
 
 		removeEntry.setBorder(new EmptyBorder(2, 2, 2, 2));
 
+		JPanel removePanel = new JPanel(new BorderLayout());
 		removePanel.add(removeEntry, BorderLayout.EAST);
 		removePanel.add(nameActions, BorderLayout.WEST);
 		removePanel.add(resetOptions, BorderLayout.CENTER);
 
-
-		weaponLabel.setHorizontalAlignment(SwingConstants.CENTER);
-		weaponLabel.setBorder(new EmptyBorder(2, 2, 2, 2));
+		JPanel weaponIconPanel = new JPanel(new BorderLayout())
+		{
+			@Override
+			protected void paintComponent(Graphics g)
+			{
+				super.paintComponent(g);
+				ImageIcon image = new ImageIcon(ImageUtil.loadImageResource(AttackSoundNotificationsPlugin.class, "/icons/weapon_back.png"));
+				int x = (getWidth() - image.getIconWidth()) / 2;
+				int y = (getHeight() - image.getIconHeight()) / 2;
+				g.drawImage(image.getImage(), x, y, null);
+			}
+		};
 		weaponIconPanel.add(weaponLabel, BorderLayout.CENTER);
 		weaponIconPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 		weaponIconPanel.setMinimumSize(new Dimension(32, 32));
 		weaponIconPanel.setPreferredSize(new Dimension(32, 32));
 		weaponIconPanel.setMaximumSize(new Dimension(32, 32));
+		JPanel chooserPanel = new JPanel(new BorderLayout());
 		chooserPanel.add(replacing, BorderLayout.EAST);
 		chooserPanel.add(weaponIconPanel, BorderLayout.WEST);
 		chooserPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
+		JPanel topPanel = new JPanel(new BorderLayout());
 		topPanel.add(removePanel, BorderLayout.NORTH);
 		topPanel.add(chooserPanel, BorderLayout.CENTER);
 		topPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
@@ -402,24 +400,30 @@ public class EntryPanel extends JPanel
 
 		audible.setHorizontalAlignment(SwingConstants.CENTER);
 		audible.setToolTipText("Enable/Disable");
+		JPanel iconPanel = new JPanel(new BorderLayout());
 		iconPanel.add(audible, BorderLayout.WEST);
 		iconPanel.add(playing, BorderLayout.CENTER);
 		iconPanel.add(clearPlaying, BorderLayout.EAST);
 		iconPanel.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 		iconPanel.setBorder(new EmptyBorder(4, 4, 4, 4));
 
+		selectFile = new JLabel();
 		selectFile.setIcon(OPEN_ICON);
 		selectFile.setToolTipText("Find the file in on your computer");
 
+		textEntry = new JPanel(new BorderLayout());
 		textEntry.add(new JLabel("Enter your custom sound here:"), BorderLayout.NORTH);
 		textEntry.add(customSoundTextField, BorderLayout.CENTER);
 		textEntry.add(selectFile, BorderLayout.EAST);
 		textEntry.setBorder(new EmptyBorder(5, 8, 5, 8));
 		textEntry.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+		JPanel buttons = new JPanel(new BorderLayout());
 		buttons.add(textEntry, BorderLayout.NORTH);
 		buttons.add(testSound, BorderLayout.CENTER);
 		buttons.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 
+		// Not my stuff - From the ScreenMarkerPluginPanel //
+		JPanel bottomContainer = new JPanel(new BorderLayout());
 		bottomContainer.add(topPanel, BorderLayout.NORTH);
 		bottomContainer.add(iconPanel, BorderLayout.CENTER);
 		bottomContainer.add(buttons, BorderLayout.SOUTH);
@@ -621,18 +625,17 @@ public class EntryPanel extends JPanel
 				{
 					String text = customSoundTextField.getText();
 					pluginPanel.requestFocusInWindow();
+					String newString;
 					if (text.contains("\\"))
 					{
-						String newString = text.substring(text.lastIndexOf('\\') + 1, text.lastIndexOf('.'));
-						playing.setText(newString);
-						playing.setToolTipText(newString);
+						newString = text.substring(text.lastIndexOf('\\') + 1, text.lastIndexOf('.'));
 					}
 					else
 					{
-						String newString = text.substring(text.lastIndexOf('/') + 1, text.lastIndexOf('.'));
-						playing.setText(newString);
-						playing.setToolTipText(newString);
+						newString = text.substring(text.lastIndexOf('/') + 1, text.lastIndexOf('.'));
 					}
+					playing.setText(newString);
+					playing.setToolTipText(newString);
 
 					pluginPanel.save();
 				}
@@ -662,18 +665,17 @@ public class EntryPanel extends JPanel
 					{
 						customSoundTextField.setText(filePath);
 						pluginPanel.requestFocusInWindow();
+						String newString;
 						if (filePath.contains("\\"))
 						{
-							String newString = filePath.substring(filePath.lastIndexOf('\\') + 1, filePath.lastIndexOf('.'));
-							playing.setText(newString);
-							playing.setToolTipText(newString);
+							newString = filePath.substring(filePath.lastIndexOf('\\') + 1, filePath.lastIndexOf('.'));
 						}
 						else
 						{
-							String newString = filePath.substring(filePath.lastIndexOf('/') + 1, filePath.lastIndexOf('.'));
-							playing.setText(newString);
-							playing.setToolTipText(newString);
+							newString = filePath.substring(filePath.lastIndexOf('/') + 1, filePath.lastIndexOf('.'));
 						}
+						playing.setText(newString);
+						playing.setToolTipText(newString);
 						pluginPanel.save();
 					}
 					else
@@ -830,17 +832,6 @@ public class EntryPanel extends JPanel
 	public void setReplacing(Condition replacingValue)
 	{
 		replacing.setSelectedItem(replacingValue);
-	}
-
-	public void setPlaying(String playingValue)
-	{
-		playing.setText(playingValue);
-	}
-
-	public void makeSoundInputVisible()
-	{
-		textEntry.setVisible(true);
-		selectFile.setVisible(true);
 	}
 
 	public void setCustomSoundPath(String customSoundPath)
