@@ -3,6 +3,7 @@
  * Copyright (c) 2018, Raqes <j.raqes@gmail.com>
  * Copyright (c) 2019, Ron Young <https://github.com/raiyni>
  * Copyright (c) 2023, Jacob Browder <https://github.com/DominickCobb-rs>
+ * Copyright (c) 2024, TJ Stein <https://github.com/AverageToaster>
  * All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -55,6 +56,7 @@ import net.runelite.api.events.VarbitChanged;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.events.ProfileChanged;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.chatbox.ChatboxItemSearch;
 import net.runelite.client.game.chatbox.ChatboxPanelManager;
@@ -132,6 +134,13 @@ public class AttackSoundNotificationsPlugin extends Plugin
 		pluginPanel.save();
 		clientToolbar.removeNavigation(navButton);
 		log.info("Attack Sounds Notifier stopped!");
+	}
+
+	// Load new profile's attack sound notifications into the plugin panel.
+	@Subscribe
+	public void onProfileChanged(ProfileChanged profileChanged)
+	{
+		pluginPanel.profileChanged();
 	}
 
 	// From the SpecialAttackCounter plugin
