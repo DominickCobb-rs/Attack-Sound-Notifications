@@ -3,6 +3,7 @@
  * Copyright (c) 2018, Kamiel, <https://github.com/Kamielvf>
  * Copyright (c) 2018, Psikoi <https://github.com/psikoi>
  * Copyright (c) 2023, DominickCobb-rs <https://github.com/DominickCobb-rs>
+ * Copyright (c) 2024, TJ Stein <https://github.com/AverageToaster>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -220,8 +221,8 @@ public class AttackSoundNotificationsPanel extends PluginPanel
 				}
 
 			}
-			startup = false;
 		}
+		startup = false;
 	}
 
 	public void save()
@@ -238,6 +239,14 @@ public class AttackSoundNotificationsPanel extends PluginPanel
 	{
 		entryPanelList.remove(panel);
 		save();
+	}
+
+	public void profileChanged()
+	{
+		entryPanelList.clear();
+		entryPanel.removeAll();
+		loadEntryPanels(entryPanel);
+		reloadPanels();
 	}
 
 	// Sounds! //
