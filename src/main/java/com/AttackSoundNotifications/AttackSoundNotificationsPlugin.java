@@ -68,7 +68,7 @@ import net.runelite.client.util.ImageUtil;
 
 @Slf4j
 @PluginDescriptor(name = "Attack Sound Notifications", description = "A plugin that plays sounds based on hitsplats and special attacks", tags = {
-	"special", "sounds", "notifications"}, loadWhenOutdated = true, enabledByDefault = true)
+	"special", "sounds", "notifications"})
 public class AttackSoundNotificationsPlugin extends Plugin
 {
 	public static final String CONFIG_GROUP = "attacknotifications";
